@@ -1,6 +1,4 @@
-import RightUserInfo from "./right-user-info";
-
-const Header = () => {
+const Search = () => {
   return (
     <div className="flex items-center justify-between p-4 bg-white shadow">
       {/* Search */}
@@ -13,11 +11,8 @@ const Header = () => {
         <span className="absolute left-3 top-2.5 text-gray-500">🔍</span>
       </div>
 
-      {/* Right icons */}
-      <RightUserInfo />
-
     </div>
   );
 };
 
-export default Header;
+export default Search;
