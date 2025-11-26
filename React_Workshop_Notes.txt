@@ -1,0 +1,29 @@
+//Some notes:
+GET toàn bộ users
+https://dummyjson.com/users
+
+GET 1 user theo ID
+https://dummyjson.com/users/1
+
+POST – thêm user mới
+https://dummyjson.com/users/add
+
+PUT – cập nhật user toàn bộ
+https://dummyjson.com/users/1
+
+PATCH – cập nhật 1 phần
+https://dummyjson.com/users/1
+
+DELETE – xoá user
+https://dummyjson.com/users/1
+
+
+//Some user login: https://dummyjson.com/auth/login (POST)
+//Officer:
+username: "michaelw" — password: "michaelwpass"	  
+
+//Normal user:
+username: "emilys" — password: "emilyspass"
+
+//Normal user:
+username: "sophiab" — password: "sophiabpass"	  

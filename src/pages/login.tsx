@@ -7,12 +7,14 @@ import CheckBox from "../components/checkbox";
 import Button from "../components/button";
 import { useForm } from "react-hook-form";
 import { useLoginMutation } from "../hooks/use-login-mutation";
+import { OFFICER_ROLES } from "../constant/user-role";
 
 const Login = () => {
+
   const navigate = useNavigate();
 
   const rememberedUsername = localStorage.getItem("rememberedUsername") || "";
-  
+
   const { handleSubmit, register, formState: { errors }, watch } = useForm<LoginForm>({
     defaultValues: {
       username: rememberedUsername,
@@ -29,8 +31,12 @@ const Login = () => {
         password: data.password,
       });
 
+      //Handle roles:
+      const role: "officer" | "user" = OFFICER_ROLES.includes(data.username) ? "officer" : "user";
+
       const { accessToken } = response.data;
       localStorage.setItem(TOKEN, accessToken);
+      localStorage.setItem("user", JSON.stringify({ username: data.username, role }));
 
       //Handle remember checkbox  
       if (data.remember) {
@@ -39,7 +45,14 @@ const Login = () => {
         localStorage.removeItem("rememberedUsername");
       }
 
-      return navigate(ADMIN_URL.DASHBOARD);
+      const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+
+      if (storedUser.role === "officer") {
+        return navigate(ADMIN_URL.DASHBOARD);
+      } 
+
+      return navigate(ADMIN_URL.PROFILE);
+
     } catch (err) {
       console.error("Login failed:", err);
     }
