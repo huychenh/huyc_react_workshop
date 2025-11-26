@@ -11,6 +11,7 @@ import AuthLayout from "../layouts/auth";
 import AdminLayout from "../layouts/admin";
 import SignUp from "../pages/signup";
 import KYCSubmission from "../pages/kyc-submission";
+import UserProfile from "../pages/user-profile";
 
 const requireAuth = () => {
   const token = localStorage.getItem(TOKEN);
@@ -50,6 +51,10 @@ const Router = createBrowserRouter([
       {
         path: ADMIN_URL.DASHBOARD,
         Component: Dashboard,
+      },
+      {
+        path: ADMIN_URL.PROFILE,
+        Component: UserProfile,
       },
       {
         path: ADMIN_URL.SUBMISSIONS,

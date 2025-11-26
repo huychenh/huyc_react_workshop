@@ -12,13 +12,11 @@ const Login = () => {
   const navigate = useNavigate();
 
   const rememberedUsername = localStorage.getItem("rememberedUsername") || "";
-  const rememberedPassword = localStorage.getItem("rememberedPassword") || "";
-
+  
   const { handleSubmit, register, formState: { errors }, watch } = useForm<LoginForm>({
     defaultValues: {
       username: rememberedUsername,
-      password: rememberedPassword,
-      remember: !!rememberedUsername && !!rememberedPassword,
+      remember: !!rememberedUsername
     },
   });
 
@@ -37,10 +35,8 @@ const Login = () => {
       //Handle remember checkbox  
       if (data.remember) {
         localStorage.setItem("rememberedUsername", data.username);
-        localStorage.setItem("rememberedPassword", data.password);
       } else {
         localStorage.removeItem("rememberedUsername");
-        localStorage.removeItem("rememberedPassword");
       }
 
       return navigate(ADMIN_URL.DASHBOARD);
