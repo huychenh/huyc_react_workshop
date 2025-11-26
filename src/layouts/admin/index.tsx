@@ -5,16 +5,14 @@ import Footer from "./footer";
 
 const AdminLayout = () => {
   return (
-    <div className="flex h-screen overflow-hidden">
-      {/* Sidebar cố định */}
+    <div className="flex h-screen overflow-hidden">      
       <Sidebar />
 
       {/* Main area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header cố định */}
+      <div className="flex-1 flex flex-col overflow-hidden">        
         <Header />
 
-        {/* Main content scroll riêng */}
+        {/* Main content */}
         <main className="flex-1 overflow-auto bg-gray-100 p-6">
           <Outlet />
         </main>

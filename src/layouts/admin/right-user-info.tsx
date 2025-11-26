@@ -1,8 +1,15 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { AUTH_URL } from "../../constant/url";
 
 const RightUserInfo = () => {
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const handleLogout = () => {    
+    localStorage.removeItem("token");    
+    navigate(AUTH_URL.LOGIN);
+  };
 
   return (
     <div className="relative flex items-center space-x-4 text-xl">
@@ -18,12 +25,12 @@ const RightUserInfo = () => {
 
         {open && (
           <div className="absolute right-0 mt-2 w-32 bg-white border rounded shadow-lg text-left z-50">
-            <a
-              href={AUTH_URL.LOGOUT}
-              className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
+            <button
+              onClick={handleLogout}
+              className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 cursor-pointer"
             >
               Logout
-            </a>
+            </button>
           </div>
         )}
       </div>

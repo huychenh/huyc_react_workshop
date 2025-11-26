@@ -1,7 +1,7 @@
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import type { LoginForm } from "../types/login-form";
 import { TOKEN } from "../constant/auth";
-import { ADMIN_URL } from "../constant/url";
+import { ADMIN_URL, AUTH_URL } from "../constant/url";
 import Input from "../components/input";
 import CheckBox from "../components/checkbox";
 import Button from "../components/button";
@@ -11,12 +11,16 @@ import { useLoginMutation } from "../hooks/use-login-mutation";
 const Login = () => {
   const navigate = useNavigate();
 
-  const {
-    handleSubmit,
-    register,
-    formState: { errors },
-    watch,
-  } = useForm<LoginForm>();
+  const rememberedUsername = localStorage.getItem("rememberedUsername") || "";
+  const rememberedPassword = localStorage.getItem("rememberedPassword") || "";
+
+  const { handleSubmit, register, formState: { errors }, watch } = useForm<LoginForm>({
+    defaultValues: {
+      username: rememberedUsername,
+      password: rememberedPassword,
+      remember: !!rememberedUsername && !!rememberedPassword,
+    },
+  });
 
   const { mutateAsync: login, isPending, error, reset } = useLoginMutation();
 
@@ -29,6 +33,16 @@ const Login = () => {
 
       const { accessToken } = response.data;
       localStorage.setItem(TOKEN, accessToken);
+
+      //Handle remember checkbox  
+      if (data.remember) {
+        localStorage.setItem("rememberedUsername", data.username);
+        localStorage.setItem("rememberedPassword", data.password);
+      } else {
+        localStorage.removeItem("rememberedUsername");
+        localStorage.removeItem("rememberedPassword");
+      }
+
       return navigate(ADMIN_URL.DASHBOARD);
     } catch (err) {
       console.error("Login failed:", err);
@@ -76,16 +90,12 @@ const Login = () => {
       </form>
       <p className="mt-4 text-sm text-center text-gray-600">
         Don't have an account?
-        <a
-          href="#"
-          onClick={(e) => {
-            e.preventDefault();
-            navigate("/auth/signup");
-          }}
+        <Link
+          to={AUTH_URL.SIGNUP}
           className="ml-2 text-blue-600 hover:underline"
         >
           Sign up
-        </a>
+        </Link>
       </p>
     </>
   );
