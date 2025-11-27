@@ -1,13 +1,17 @@
 import type { UserInfo } from "./user-info";
 
-export type User = UserInfo & {  
-  country: string;
-  city: string;
-  address: string;
-  phone: string;
-  birthday: string;
-  organization: string;
-  role: string;
-  department: string;
-  zip: string;
+export type UserInfoFull = UserInfo & {
+  phone?: string;
+  birthDate?: string;
+  address?: {
+    address?: string;
+    city?: string;
+    postalCode?: string;
+    state?: string;
+  };
+  company?: {
+    name?: string;
+    title?: string;
+    department?: string;
+  };
 };

@@ -1,7 +1,7 @@
-export type UserAccount = {  
+export type Account = {  
   username: string;
   email: string; 
   accessToken: string;
   refreshToken: string;
-  profilePic: string;
+  role: string;   
 };

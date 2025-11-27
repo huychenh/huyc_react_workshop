@@ -1,63 +1,41 @@
+import { useEffect, useState } from "react";
 import type { UserInfo } from "../types/user-info";
+import { ADMIN_URL, API_URL_GET_LIST_USERS } from "../constant/url";
+import { useNavigate } from "react-router-dom";
 
 const UserList = () => {
-  //Get from API
-  const users: UserInfo[] = [
-    {
-      id: 1,
-      username: "janesmith",
-      email: "client1@gmail.com",
-      firstName: "Jane",
-      lastName: "Smith",
-      gender: "Female",
-      profilePic: "/images/user-23.jpg",
-    },
-    {
-      id: 2,
-      username: "johnmiller",
-      email: "client2@gmail.com",
-      firstName: "John",
-      lastName: "Miller",
-      gender: "Male",
-      profilePic: "/images/user-23.jpg",
-    },
-    {
-      id: 3,
-      username: "mariagonzalez",
-      email: "client3@gmail.com",
-      firstName: "Maria",
-      lastName: "Gonzalez",
-      gender: "Female",
-      profilePic: "/images/user-23.jpg",
-    },
-    {
-      id: 4,
-      username: "davidlee",
-      email: "client4@gmail.com",
-      firstName: "David",
-      lastName: "Lee",
-      gender: "Male",
-      profilePic: "/images/user-23.jpg",
-    },
-    {
-      id: 5,
-      username: "alextaylor",
-      email: "client5@gmail.com",
-      firstName: "Alex",
-      lastName: "Taylor",
-      gender: "Male",
-      profilePic: "/images/user-23.jpg",
-    },
-    {
-      id: 6,
-      username: "sophiachan",
-      email: "client6@gmail.com",
-      firstName: "Sophia",
-      lastName: "Chan",
-      gender: "Female",
-      profilePic: "/images/user-23.jpg",
-    },
-  ];
+  const [users, setUsers] = useState<UserInfo[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(API_URL_GET_LIST_USERS);
+        if (!response.ok) {
+          throw new Error("Failed to fetch users");
+        }
+        const data = await response.json();
+        setUsers(data.users);
+      } catch (err: any) {
+        setError(err.message || "Something went wrong");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUsers();
+  }, []);
+
+  if (loading) {
+    return <p className="text-center py-4">Loading users...</p>;
+  }
+
+  if (error) {
+    return <p className="text-center py-4 text-red-500">{error}</p>;
+  }
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
@@ -87,37 +65,29 @@ const UserList = () => {
             ) : (
               users.map((user: UserInfo) => (
                 <tr key={user.id} className="hover:bg-gray-50">
-                  {/* Avatar */}
                   <td className="px-4 py-2 border-b">
                     <img
-                      src={user.profilePic}
+                      src={
+                        user.avatar ||
+                        (user.gender === "male" ? "/images/male.jpg" : "/images/female.jpg")
+                      }
                       alt={user.username}
                       className="w-10 h-10 rounded-full border"
                     />
                   </td>
-
-                  {/* Username */}
                   <td className="px-4 py-2 border-b">{user.username}</td>
-
-                  {/* Email */}
                   <td className="px-4 py-2 border-b">{user.email}</td>
-
-                  {/* FirstName */}
                   <td className="px-4 py-2 border-b">{user.firstName}</td>
-
-                  {/* LastName */}
                   <td className="px-4 py-2 border-b">{user.lastName}</td>
-
-                  {/* Gender */}
                   <td className="px-4 py-2 border-b">{user.gender}</td>
-
-                  {/* Actions */}
-                  <td className="px-4 py-2 border-b space-x-2">
-                    <button className="px-3 py-1 border border-blue-500 text-blue-500 rounded hover:bg-blue-50">
+                  <td className="px-4 py-2 border-b space-x-2">                    
+                    <button
+                      onClick={() => navigate(`${ADMIN_URL.PROFILE}/${user.id}`)}
+                      className="px-3 py-1 border border-blue-500 text-blue-500 rounded hover:bg-blue-50 cursor-pointer"
+                    >
                       View
                     </button>
-
-                    <button className="px-3 py-1 border border-red-500 text-red-500 rounded hover:bg-red-50">
+                    <button className="px-3 py-1 border border-red-500 text-red-500 rounded hover:bg-red-50 cursor-pointer">
                       Delete
                     </button>
                   </td>
@@ -127,17 +97,11 @@ const UserList = () => {
           </tbody>
         </table>
 
-        {/* Pagination */}
         <div className="flex justify-end mt-4 space-x-2">
-          <button
-            className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
-            disabled
-          >
+          <button className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 cursor-pointer" disabled>
             Previous
           </button>
-          <button className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">
-            Next
-          </button>
+          <button className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 cursor-pointer">Next</button>
         </div>
       </div>
     </div>

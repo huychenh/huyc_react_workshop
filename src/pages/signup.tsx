@@ -4,6 +4,7 @@ import Input from "../components/input";
 import CheckBox from "../components/checkbox";
 import Button from "../components/button";
 import type { SignUpForm } from "../types/signup-form";
+import { API_URL_ADD_USERS } from "../constant/url";
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -19,7 +20,7 @@ const SignUp = () => {
     console.log("Sign up data: ", data);
 
     try {
-      const response = await fetch("https://dummyjson.com/users/add", {
+      const response = await fetch(API_URL_ADD_USERS, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

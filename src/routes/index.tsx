@@ -53,7 +53,7 @@ const Router = createBrowserRouter([
         Component: Dashboard,
       },
       {
-        path: ADMIN_URL.PROFILE,
+        path: `${ADMIN_URL.PROFILE}/:id`,
         Component: UserProfile,
       },
       {

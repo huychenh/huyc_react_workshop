@@ -1,14 +1,34 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ADMIN_URL, AUTH_URL } from "../../constant/url";
+import { ADMIN_URL, AUTH_URL, API_URL_BASE } from "../../constant/url";
 
 const RightUserInfo = () => {
   const [open, setOpen] = useState(false);
+  const [userId, setUserId] = useState<number | null>(null);
   const navigate = useNavigate();
 
   const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
   const username = storedUser.username || "User";
   const role = storedUser.role || "user";
+
+  // When mount, call DummyJSON to get id by username.
+  useEffect(() => {
+    const fetchUserId = async () => {
+      try {
+        const res = await fetch(`${API_URL_BASE}/users`);
+        if (!res.ok) throw new Error("Failed to fetch users");
+        const data = await res.json();
+
+        // data.users
+        const found = data.users.find((u: any) => u.username === username);
+        if (found) setUserId(found.id);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    if (username) fetchUserId();
+  }, [username]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -17,8 +37,12 @@ const RightUserInfo = () => {
   };
 
   const goToProfile = () => {
-    navigate(ADMIN_URL.PROFILE);
-    setOpen(false);
+    if (userId) {
+      navigate(`${ADMIN_URL.PROFILE}/${userId}`);
+      setOpen(false);
+    } else {
+      alert("User ID not found yet");
+    }
   };
 
   const goToUserList = () => {
@@ -32,7 +56,7 @@ const RightUserInfo = () => {
 
       <div className="relative">
         <img
-          src="/images/user-23.jpg"
+          src="/images/avatar.png"
           className="w-10 h-10 rounded-full border cursor-pointer"
           alt="User avatar"
           onClick={() => setOpen(!open)}
@@ -42,7 +66,7 @@ const RightUserInfo = () => {
           <div className="absolute right-0 mt-2 w-48 bg-white border rounded shadow-lg text-left z-50 p-2 text-sm">
             <div className="mb-2 text-gray-700">
               <p>
-                Hello, <strong>{username}</strong> (Role: <em>{role}</em>)
+                Hello, <strong>{username}</strong> -- <em>{role}</em>
               </p>
             </div>
 
@@ -53,7 +77,6 @@ const RightUserInfo = () => {
               User Profile
             </button>
 
-            {/* User List */}
             {role === "officer" && (
               <button
                 onClick={goToUserList}
