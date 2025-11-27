@@ -21,9 +21,14 @@ const RightUserInfo = () => {
     setOpen(false);
   };
 
+  const goToUserList = () => {
+    navigate(ADMIN_URL.USERS);
+    setOpen(false);
+  };
+
   return (
-    <div className="relative flex items-center space-x-4 text-xl">
-      <button className="hover:bg-gray-100 p-2 rounded-full">🔔</button>
+    <div className="relative flex items-center space-x-4">
+      <button className="hover:bg-gray-100 p-2 rounded-full text-xl">🔔</button>
 
       <div className="relative">
         <img
@@ -34,17 +39,30 @@ const RightUserInfo = () => {
         />
 
         {open && (
-          <div className="absolute right-0 mt-2 w-48 bg-white border rounded shadow-lg text-left z-50 p-2">
-            <div className="mb-2 text-sm text-gray-700">
-              <p>Hello, <strong>{username}</strong></p>
-              <p>Role: <em>{role}</em></p>
+          <div className="absolute right-0 mt-2 w-48 bg-white border rounded shadow-lg text-left z-50 p-2 text-sm">
+            <div className="mb-2 text-gray-700">
+              <p>
+                Hello, <strong>{username}</strong> (Role: <em>{role}</em>)
+              </p>
             </div>
+
             <button
               onClick={goToProfile}
               className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 rounded cursor-pointer"
             >
               User Profile
             </button>
+
+            {/* User List */}
+            {role === "officer" && (
+              <button
+                onClick={goToUserList}
+                className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 rounded cursor-pointer mt-1"
+              >
+                User List
+              </button>
+            )}
+
             <button
               onClick={handleLogout}
               className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 rounded cursor-pointer mt-1"

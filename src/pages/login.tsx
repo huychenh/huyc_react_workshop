@@ -48,7 +48,7 @@ const Login = () => {
       const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
 
       if (storedUser.role === "officer") {
-        return navigate(ADMIN_URL.DASHBOARD);
+        return navigate(ADMIN_URL.USERS);
       } 
 
       return navigate(ADMIN_URL.PROFILE);

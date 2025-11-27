@@ -1,4 +1,5 @@
 const KYCSubmission = () => {
+  //Get from API
   const submissions: any[] = [
     { name: "Nguyen Van A", status: "Approved", date: "2024-11-25" },
     { name: "Nguyen Van B", status: "Pending", date: "2024-12-25" },

@@ -14,5 +14,6 @@ export const ADMIN_URL = {
   SUBMISSIONS: `${ADMIN_BASE}/submissions`,
   PROFILE: `${ADMIN_BASE}/profile`,
   LOGOUT: `${ADMIN_BASE}/logout`,
+  USERS: `${ADMIN_BASE}/users`,
 };
 
