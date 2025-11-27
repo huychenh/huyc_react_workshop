@@ -10,15 +10,19 @@ import { useLoginMutation } from "../hooks/use-login-mutation";
 import { OFFICER_ROLES } from "../constant/user-role";
 
 const Login = () => {
-
   const navigate = useNavigate();
 
   const rememberedUsername = localStorage.getItem("rememberedUsername") || "";
 
-  const { handleSubmit, register, formState: { errors }, watch } = useForm<LoginForm>({
+  const {
+    handleSubmit,
+    register,
+    formState: { errors },
+    watch,
+  } = useForm<LoginForm>({
     defaultValues: {
       username: rememberedUsername,
-      remember: !!rememberedUsername
+      remember: !!rememberedUsername,
     },
   });
 
@@ -31,14 +35,21 @@ const Login = () => {
         password: data.password,
       });
 
-      //Handle roles:
-      const role: "officer" | "user" = OFFICER_ROLES.includes(data.username) ? "officer" : "user";
+      // Handle roles
+      const role: "officer" | "user" = OFFICER_ROLES.includes(data.username)
+        ? "officer"
+        : "user";
 
-      const { accessToken } = response.data;
+      const { accessToken, id } = response.data;
+
+      // Save token + user info
       localStorage.setItem(TOKEN, accessToken);
-      localStorage.setItem("user", JSON.stringify({ username: data.username, role }));
+      localStorage.setItem(
+        "user",
+        JSON.stringify({ id, username: data.username, role })
+      );
 
-      //Handle remember checkbox  
+      // Handle remember checkbox
       if (data.remember) {
         localStorage.setItem("rememberedUsername", data.username);
       } else {
@@ -49,10 +60,10 @@ const Login = () => {
 
       if (storedUser.role === "officer") {
         return navigate(ADMIN_URL.USERS);
-      } 
+      }
 
-      return navigate(ADMIN_URL.PROFILE);
-
+      // Navigate user profile WITH ID
+      return navigate(`${ADMIN_URL.PROFILE}/${storedUser.id}`);
     } catch (err) {
       console.error("Login failed:", err);
     }

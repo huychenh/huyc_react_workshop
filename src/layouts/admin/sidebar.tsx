@@ -5,6 +5,9 @@ const Sidebar = () => {
   const baseClasses =
     "flex items-center gap-2 p-2 rounded hover:bg-gray-300 hover:text-black";
 
+  const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+  const profileUrl = `${ADMIN_URL.PROFILE}/${storedUser.id}`;
+
   return (
     <aside className="bg-white shadow p-4 text-center">
       <Link
@@ -14,11 +17,10 @@ const Sidebar = () => {
         Simple KYC
       </Link>
 
-
       <nav className="space-y-2">
         {/* My Profile */}
         <NavLink
-          to={ADMIN_URL.PROFILE}
+          to={profileUrl}
           className={({ isActive }) =>
             `${baseClasses} ${isActive ? "bg-gray-300 text-black" : ""}`
           }
