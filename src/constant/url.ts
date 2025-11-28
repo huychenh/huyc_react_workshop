@@ -15,6 +15,7 @@ export const ADMIN_URL = {
   PROFILE: `${ADMIN_BASE}/profile`,
   LOGOUT: `${ADMIN_BASE}/logout`,
   USERS: `${ADMIN_BASE}/users`,
+  KYC: `${ADMIN_BASE}/kyc`,
 };
 
 export const API_URL_BASE = "https://dummyjson.com";
@@ -22,3 +23,5 @@ export const API_URL_GET_LIST_USERS = `${API_URL_BASE}/users`;
 export const API_URL_ADD_USERS = `${API_URL_BASE}/users/add`;
 export const API_URL_GET_USER_BY_ID = (id: number | string) => `${API_URL_BASE}/users/${id}`;
 export const API_URL_UPDATE_USER = (id: number | string) => `${API_URL_BASE}/users/${id}`;
+export const API_URL_GET_KYC_BY_ID = (id: number | string) => `${API_URL_BASE}/users/${id}`;
+export const API_URL_UPDATE_KYC = (id: number | string) => `${API_URL_BASE}/users/${id}`;

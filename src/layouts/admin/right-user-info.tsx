@@ -74,7 +74,7 @@ const RightUserInfo = () => {
               onClick={goToProfile}
               className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 rounded cursor-pointer"
             >
-              User Profile
+              My Profile
             </button>
 
             {role === "officer" && (
@@ -82,7 +82,7 @@ const RightUserInfo = () => {
                 onClick={goToUserList}
                 className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 rounded cursor-pointer mt-1"
               >
-                User List
+                Client List
               </button>
             )}
 

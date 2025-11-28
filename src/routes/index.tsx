@@ -13,6 +13,8 @@ import SignUp from "../pages/signup";
 import KYCSubmission from "../pages/kyc-submission";
 import UserProfile from "../pages/user-profile";
 import UserList from "../pages/user-list";
+import KYCInformation from "../pages/kyc-information";
+
 
 const requireAuth = () => {
   const token = localStorage.getItem(TOKEN);
@@ -64,6 +66,10 @@ const Router = createBrowserRouter([
         path: ADMIN_URL.USERS,
         Component: UserList,
       },
+      {
+        path: `${ADMIN_URL.KYC}/:id`,
+        Component: KYCInformation,
+      }
     ],
   },
 ]);

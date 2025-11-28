@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import { API_URL_GET_USER_BY_ID, API_URL_UPDATE_USER } from "../constant/url";
+import { useNavigate, useParams } from "react-router-dom";
+import { ADMIN_URL, API_URL_GET_USER_BY_ID, API_URL_UPDATE_USER } from "../constant/url";
 import type { UserInfoFull } from "../types/user-info-full";
 
 const normalizeUser = (data: any): UserInfoFull => {
@@ -21,7 +21,7 @@ const normalizeUser = (data: any): UserInfoFull => {
     city: data.address?.city || "",
     address: data.address?.address || "",
     zipCode: data.address?.postalCode || "",
-    country: data.address?.state || "", // DummyJSON không có country
+    country: data.address?.state || "",
 
     // Company
     organization: data.company?.name || "",
@@ -32,7 +32,7 @@ const normalizeUser = (data: any): UserInfoFull => {
 
 const UserProfile = () => {
   const { id } = useParams();
-
+  const navigate = useNavigate();
   const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
   const isForbidden = storedUser.role === "officer" && storedUser.id !== Number(id);
 
@@ -155,8 +155,8 @@ const UserProfile = () => {
               {/* Upload */}
               <label
                 className={`px-3 py-1 rounded text-sm cursor-pointer ${!isEditing || isForbidden
-                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                    : "bg-blue-600 text-white hover:bg-blue-700"
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  : "bg-blue-600 text-white hover:bg-blue-700"
                   }`}
               >
                 Upload Picture
@@ -180,8 +180,8 @@ const UserProfile = () => {
               <button
                 disabled={!isEditing || isForbidden}
                 className={`px-3 py-1 rounded text-sm ${!isEditing || isForbidden
-                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                    : "bg-gray-500 text-white hover:bg-gray-400"
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  : "bg-gray-500 text-white hover:bg-gray-400"
                   }`}
                 onClick={() => {
                   if (!isEditing || isForbidden) return;
@@ -219,8 +219,8 @@ const UserProfile = () => {
                 readOnly={!isEditing || isForbidden}
                 onChange={(e) => handleChange(key as keyof UserInfoFull, e.target.value)}
                 className={`mt-1 w-full border px-2 py-1 rounded ${isEditing && !isForbidden
-                    ? "border-blue-500"
-                    : "border-gray-300 bg-gray-100"
+                  ? "border-blue-500"
+                  : "border-gray-300 bg-gray-100"
                   }`}
               />
             </div>
@@ -233,8 +233,8 @@ const UserProfile = () => {
 
           <button
             className={`px-4 py-2 rounded text-white ${isForbidden
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-blue-600 hover:bg-blue-700"
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700"
               } ${saving ? "opacity-50 cursor-not-allowed" : ""}`}
             disabled={saving || isForbidden}
             onClick={async () => {
@@ -255,7 +255,10 @@ const UserProfile = () => {
             </button>
           )}
 
-          <button className="px-4 py-2 bg-gray-300 rounded cursor-pointer hover:bg-gray-400">
+          <button
+            className="px-4 py-2 bg-gray-300 rounded cursor-pointer hover:bg-gray-400"            
+            onClick={() => navigate(`${ADMIN_URL.KYC}/${user.id}`)}
+          >
             KYC
           </button>
 
