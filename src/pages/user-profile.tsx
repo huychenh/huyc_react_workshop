@@ -3,6 +3,33 @@ import { useParams } from "react-router-dom";
 import { API_URL_GET_USER_BY_ID, API_URL_UPDATE_USER } from "../constant/url";
 import type { UserInfoFull } from "../types/user-info-full";
 
+const normalizeUser = (data: any): UserInfoFull => {
+  return {
+    id: data.id,
+    username: data.username || "",
+    firstName: data.firstName || "",
+    lastName: data.lastName || "",
+    email: data.email || "",
+    gender: data.gender || "",
+    avatar: data.image || "",
+
+    // Basic
+    phoneNumber: data.phone || "",
+    birthday: data.birthDate || "",
+
+    // Address
+    city: data.address?.city || "",
+    address: data.address?.address || "",
+    zipCode: data.address?.postalCode || "",
+    country: data.address?.state || "", // DummyJSON không có country
+
+    // Company
+    organization: data.company?.name || "",
+    role: data.company?.title || "",
+    department: data.company?.department || "",
+  };
+};
+
 const UserProfile = () => {
   const { id } = useParams();
 
@@ -11,11 +38,12 @@ const UserProfile = () => {
 
   const [user, setUser] = useState<UserInfoFull | null>(null);
   const [originalUser, setOriginalUser] = useState<UserInfoFull | null>(null);
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
 
   // Fetch user
   useEffect(() => {
@@ -24,59 +52,28 @@ const UserProfile = () => {
         setLoading(true);
         const res = await fetch(API_URL_GET_USER_BY_ID(Number(id)));
         if (!res.ok) throw new Error("User not found");
+
         const data = await res.json();
-        setUser(data);
-        setOriginalUser(data);
+        const normalized = normalizeUser(data);
+
+        setUser(normalized);
+        setOriginalUser(normalized);
         setError(null);
       } catch (err: any) {
-        setError(err.message || "Error fetching user");
+        setError(err.message || "Failed to fetch user");
       } finally {
         setLoading(false);
       }
     };
+
     if (id) fetchUser();
   }, [id]);
 
-  // Handle change
-  const handleChange = (key: string, label: string, value: string) => {
+  const handleChange = (key: keyof UserInfoFull, value: string) => {
     if (!user) return;
-
-    if (key === "addresses") {
-      const updatedAddresses = [...(user.addresses || [])];
-      const index = 0; // assuming first address; adjust if multiple
-      if (!updatedAddresses[index]) updatedAddresses[index] = { country: "", city: "", street: "", type: "Mailing" };
-      if (label === "City") updatedAddresses[index].city = value;
-      if (label === "Address") updatedAddresses[index].street = value;
-      if (label === "Zip/postal code") updatedAddresses[index].postalCode = value;
-      setUser({ ...user, addresses: updatedAddresses });
-    } else if (key === "company") {
-      setUser({
-        ...user,
-        company: {
-          ...user.company,
-          name: label === "Organization" ? value : user.company?.name,
-          title: label === "Role" ? value : user.company?.title,
-          department: label === "Department" ? value : user.company?.department,
-        },
-      });
-    } else if (key === "phones") {
-      const updatedPhones = [...(user.phones || [])];
-      const index = 0; // assuming first phone
-      if (!updatedPhones[index]) updatedPhones[index] = { number: "", type: "Personal", preferred: true };
-      updatedPhones[index].number = value;
-      setUser({ ...user, phones: updatedPhones });
-    } else if (key === "emails") {
-      const updatedEmails = [...(user.emails || [])];
-      const index = 0; // assuming first email
-      if (!updatedEmails[index]) updatedEmails[index] = { email: "", type: "Personal", preferred: true };
-      updatedEmails[index].email = value;
-      setUser({ ...user, emails: updatedEmails });
-    } else {
-      setUser({ ...user, [key]: value });
-    }
+    setUser({ ...user, [key]: value });
   };
 
-  // Save changes
   const saveUserChanges = async () => {
     if (!user) return;
 
@@ -94,8 +91,11 @@ const UserProfile = () => {
       if (!res.ok) throw new Error("Failed to update user");
 
       const data = await res.json();
-      setUser(data);
-      setOriginalUser(data);
+      const normalized = normalizeUser(data);
+
+      setUser(normalized);
+      setOriginalUser(normalized);
+
       setSuccessMessage("User updated successfully!");
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err: any) {
@@ -111,44 +111,36 @@ const UserProfile = () => {
     setIsEditing(false);
   };
 
-  if (loading) return <div className="p-6 text-center text-lg font-medium">Loading user information...</div>;
-  if (error || !user) return <div className="p-6 text-center text-red-500 text-lg font-medium">{error || "User not found"}</div>;
+  // UI -------------------------------------------------------------------------------------
 
-  const getValue = (key: string, label: string) => {
-    if (key === "company") {
-      if (label === "Organization") return user.company?.name || "";
-      if (label === "Role") return user.company?.title || "";
-      if (label === "Department") return user.company?.department || "";
-    } else if (key === "addresses") {
-      const addr = user.addresses?.[0];
-      if (!addr) return "";
-      if (label === "City") return addr.city;
-      if (label === "Address") return addr.street;
-      if (label === "Zip/postal code") return addr.postalCode || "";
-    } else if (key === "phones") {
-      return user.phones?.[0]?.number || "";
-    } else if (key === "emails") {
-      return user.emails?.[0]?.email || "";
-    } else {
-      return user[key as keyof UserInfoFull] as string;
-    }
-    return "";
-  };
+  if (loading)
+    return <div className="p-6 text-center text-lg font-medium">Loading user information...</div>;
+
+  if (error || !user)
+    return <div className="p-6 text-center text-red-500 text-lg font-medium">{error || "User not found"}</div>;
 
   return (
     <div className="w-full bg-gray-100 p-4 flex justify-center">
       <div className="w-full max-w-full bg-white rounded-lg shadow-md p-6">
-        {successMessage && <div className="mb-4 p-2 bg-green-100 text-green-800 rounded text-center">{successMessage}</div>}
+
+        {successMessage && (
+          <div className="mb-4 p-2 bg-green-100 text-green-800 rounded text-center">
+            {successMessage}
+          </div>
+        )}
+
         <h1 className="text-2xl font-bold mb-6">Personal Information</h1>
 
-        {/* Avatar + Buttons */}
-        <div className="flex mb-6 gap-6">
+        {/* Avatar */}
+        <div className="flex mb-6 gap-6 items-center">
           <div className="flex-shrink-0">
             <img
-              src={user.avatar || (user.gender === "male" ? "/images/male.jpg" : "/images/female.jpg")}
+              src={
+                user.avatar ||
+                (user.gender === "male" ? "/images/male.jpg" : "/images/female.jpg")
+              }
               alt="Profile"
-              className="w-24 h-full rounded-full object-cover border border-gray-300"
-              style={{ minHeight: "120px" }}
+              className="w-24 sm:w-32 h-24 sm:h-32 rounded-full object-cover border border-gray-300"
             />
           </div>
 
@@ -158,88 +150,115 @@ const UserProfile = () => {
               <p className="text-sm text-gray-500 mt-1">JPG, GIF or PNG. Max size of 800KB</p>
             </div>
 
-            {isEditing && !isForbidden && (
-              <div className="flex gap-2 mt-4">
-                <label className="px-3 py-1 bg-blue-600 text-white rounded cursor-pointer text-sm text-center hover:bg-blue-700">
-                  Upload Picture
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        const url = URL.createObjectURL(file);
-                        setUser({ ...user, avatar: url });
-                      }
-                    }}
-                  />
-                </label>
+            {/* Upload + Delete Buttons */}
+            <div className="flex gap-2 mt-4">
+              {/* Upload */}
+              <label
+                className={`px-3 py-1 rounded text-sm cursor-pointer ${!isEditing || isForbidden
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-blue-600 text-white hover:bg-blue-700"
+                  }`}
+              >
+                Upload Picture
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  disabled={!isEditing || isForbidden}
+                  onChange={(e) => {
+                    if (!isEditing || isForbidden) return;
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const url = URL.createObjectURL(file);
+                      setUser({ ...user, avatar: url });
+                    }
+                  }}
+                />
+              </label>
 
-                <button
-                  className="px-3 py-1 bg-gray-300 text-gray-700 rounded text-sm cursor-pointer hover:bg-gray-400"
-                  onClick={() => setUser({ ...user, avatar: "" })}
-                >
-                  Delete
-                </button>
-              </div>
-            )}
+              {/* Delete */}
+              <button
+                disabled={!isEditing || isForbidden}
+                className={`px-3 py-1 rounded text-sm ${!isEditing || isForbidden
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-gray-500 text-white hover:bg-gray-400"
+                  }`}
+                onClick={() => {
+                  if (!isEditing || isForbidden) return;
+                  setUser({ ...user, avatar: "" });
+                }}
+              >
+                Delete
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* User Fields */}
+        {/* Fields */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
           {[
             ["First Name", "firstName"],
             ["Last Name", "lastName"],
-            ["City", "addresses"],
-            ["Address", "addresses"],
-            ["Email", "emails"],
-            ["Phone Number", "phones"],
-            ["Birthday", "birthDate"],
-            ["Organization", "company"],
-            ["Role", "company"],
-            ["Department", "company"],
-            ["Zip/postal code", "addresses"],
+            ["Email", "email"],
+            ["Phone Number", "phoneNumber"],
+            ["City", "city"],
+            ["Address", "address"],
+            ["Country", "country"],
+            ["Birthday", "birthday"],
+            ["Organization", "organization"],
+            ["Role", "role"],
+            ["Department", "department"],
+            ["Zip Code", "zipCode"],
           ].map(([label, key]) => (
-            <div key={label} className="w-full">
+            <div key={label}>
               <label className="block text-gray-600">{label}</label>
               <input
                 type="text"
-                value={getValue(key, label)}
+                value={(user as any)[key] || ""}
                 readOnly={!isEditing || isForbidden}
-                onChange={(e) => handleChange(key, label, e.target.value)}
-                className={`mt-1 w-full border px-2 py-1 rounded ${
-                  isEditing && !isForbidden ? "border-blue-500" : "border-gray-300 bg-gray-100"
-                }`}
+                onChange={(e) => handleChange(key as keyof UserInfoFull, e.target.value)}
+                className={`mt-1 w-full border px-2 py-1 rounded ${isEditing && !isForbidden
+                    ? "border-blue-500"
+                    : "border-gray-300 bg-gray-100"
+                  }`}
               />
             </div>
           ))}
+
         </div>
 
         {/* Buttons */}
         <div className="mt-6 flex flex-wrap gap-2">
+
           <button
-            className={`px-4 py-2 rounded text-white ${
-              isForbidden ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
-            } ${saving ? "opacity-50 cursor-not-allowed" : ""}`}
+            className={`px-4 py-2 rounded text-white ${isForbidden
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700"
+              } ${saving ? "opacity-50 cursor-not-allowed" : ""}`}
+            disabled={saving || isForbidden}
             onClick={async () => {
               if (isForbidden) return;
               if (isEditing && !saving) await saveUserChanges();
               setIsEditing(!isEditing);
             }}
-            disabled={saving || isForbidden}
           >
             {isEditing ? (saving ? "Saving..." : "Save") : "Edit"}
           </button>
 
           {isEditing && !isForbidden && (
-            <button className="px-4 py-2 bg-gray-300 rounded cursor-pointer hover:bg-gray-400" onClick={handleCancel}>
+            <button
+              className="px-4 py-2 bg-gray-300 rounded cursor-pointer hover:bg-gray-400"
+              onClick={handleCancel}
+            >
               Cancel
             </button>
           )}
 
-          <button className="px-4 py-2 bg-gray-300 rounded cursor-pointer hover:bg-gray-400">KYC</button>
+          <button className="px-4 py-2 bg-gray-300 rounded cursor-pointer hover:bg-gray-400">
+            KYC
+          </button>
+
         </div>
       </div>
     </div>
