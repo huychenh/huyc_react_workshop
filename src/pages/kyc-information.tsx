@@ -4,6 +4,7 @@ import { API_URL_GET_USER_BY_ID, API_URL_UPDATE_USER } from "../constant/url";
 import type { KYCInfo } from "../types/kyc-info";
 import type { Address } from "../types/address";
 import type { Email, Emails } from "../types/email";
+import type { Phone, Phones } from "../types/phone";
 
 const normalizeKYC = (data: any): KYCInfo => {
   //Addresses
@@ -24,6 +25,16 @@ const normalizeKYC = (data: any): KYCInfo => {
   if (data.email) {
     emails.push({
       email: data.email,
+      type: "Personal", // default type
+      preferred: true, // default preferred
+    });
+  }
+
+  //Phones
+  const phones: Phones = [];
+  if (data.phone) {
+    phones.push({
+      number: data.phone,
       type: "Personal", // default type
       preferred: true, // default preferred
     });
@@ -52,6 +63,9 @@ const normalizeKYC = (data: any): KYCInfo => {
     //emails
     emails,
 
+    //phones
+    phones,
+
     // Company
     organization: data.company?.name || "",
     role: data.company?.title || "",
@@ -61,7 +75,7 @@ const normalizeKYC = (data: any): KYCInfo => {
 
 // Basic info (text inputs)
 const basicFields: Array<
-  [string, keyof Omit<KYCInfo, "addresses" | "emails">]
+  [string, keyof Omit<KYCInfo, "addresses" | "emails" | "phones">]
 > = [
   ["First Name", "firstName"],
   ["Last Name", "lastName"],
@@ -81,6 +95,13 @@ const addressFields: Array<[string, keyof Address]> = [
 // Emails
 const emailFields: Array<[string, keyof Email]> = [
   ["Email Address", "email"],
+  ["Type", "type"],
+  ["Preferred", "preferred"],
+];
+
+// Phones
+const phoneFields: Array<[string, keyof Phone]> = [
+  ["Phone Number", "number"],
   ["Type", "type"],
   ["Preferred", "preferred"],
 ];
@@ -283,6 +304,55 @@ const KYCInformation = () => {
 
       return { ...prev, emails: updatedEmails };
     });
+  };
+  //
+
+  //Function handleAddPhone
+  const handleAddPhone = () => {
+    if (!isEditing || isForbidden) return;
+
+    const newPhone: Phone = {
+      number: "",
+      type: "Personal",
+      preferred: false,
+    };
+
+    setKycInfo((prev) => {
+      const base = prev ?? ({} as KYCInfo);
+      const currentPhones = base.phones ?? [];
+
+      if (currentPhones.length >= 3) return base; // max 3 phones
+
+      return {
+        ...base,
+        phones: [...currentPhones, newPhone],
+      };
+    });
+  };
+  //
+
+  //Function handlePhoneChange
+  const handlePhoneChange = (
+    index: number,
+    key: keyof Phone,
+    value: string | boolean
+  ) => {
+    if (!kycInfo?.phones) return;
+
+    const newPhones = [...kycInfo.phones];
+    newPhones[index] = { ...newPhones[index], [key]: value };
+    setKycInfo({ ...kycInfo, phones: newPhones });
+  };
+  //
+
+  //Function handleRemovePhone
+  const handleRemovePhone = (index: number) => {
+    if (!kycInfo?.phones) return;
+
+    const updatedPhones = [...kycInfo.phones];
+    updatedPhones.splice(index, 1);
+
+    setKycInfo({ ...kycInfo, phones: updatedPhones });
   };
   //
 
@@ -516,6 +586,119 @@ const KYCInformation = () => {
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
                 Add Email
+              </button>
+            </div>
+          </div>
+
+          {/* Phones Area */}
+          {/* Phones Area */}
+          <div className="border border-gray-400 rounded-md p-4 mb-6">
+            <h3 className="text-sm font-semibold mb-2">Phones</h3>
+
+            {/* Map phones */}
+            {kycInfo.phones?.map((phone, index) => (
+              <fieldset
+                key={index}
+                className="border border-gray-400 rounded-md p-4 mb-4"
+              >
+                <legend className="text-sm font-semibold px-2 flex items-center justify-between">
+                  <span>{`Phone #${index + 1}`}</span> &nbsp;
+                  <button
+                    type="button"
+                    onClick={() => handleRemovePhone(index)}
+                    disabled={!isEditing || isForbidden}
+                    className="relative text-red-500 hover:text-red-700 disabled:opacity-50 group cursor-pointer"
+                  >
+                    ✕
+                    <span className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none shadow-lg">
+                      Remove Phone
+                    </span>
+                  </button>
+                </legend>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+                  {phoneFields.map(([label, key]) => (
+                    <div key={label}>
+                      <label className="block text-gray-600">{label}</label>
+
+                      {key === "number" && (
+                        <input
+                          type="tel"
+                          value={phone.number || ""}
+                          readOnly={!isEditing || isForbidden}
+                          onChange={(e) =>
+                            handlePhoneChange(index, "number", e.target.value)
+                          }
+                          className={`mt-1 w-full border px-2 py-1 rounded ${
+                            isEditing && !isForbidden
+                              ? "border-blue-500"
+                              : "border-gray-300 bg-gray-100"
+                          }`}
+                        />
+                      )}
+
+                      {key === "type" && (
+                        <select
+                          value={phone.type}
+                          disabled={!isEditing || isForbidden}
+                          onChange={(e) =>
+                            handlePhoneChange(
+                              index,
+                              "type",
+                              e.target.value as "Work" | "Personal"
+                            )
+                          }
+                          className={`mt-1 w-full border px-2 py-1 rounded ${
+                            isEditing && !isForbidden
+                              ? "border-blue-500"
+                              : "border-gray-300 bg-gray-100"
+                          }`}
+                        >
+                          <option value="Personal">Personal</option>
+                          <option value="Work">Work</option>
+                        </select>
+                      )}
+
+                      {key === "preferred" && (
+                        <select
+                          value={phone.preferred ? "Yes" : "No"}
+                          disabled={!isEditing || isForbidden}
+                          onChange={(e) =>
+                            handlePhoneChange(
+                              index,
+                              "preferred",
+                              e.target.value === "Yes"
+                            )
+                          }
+                          className={`mt-1 w-full border px-2 py-1 rounded ${
+                            isEditing && !isForbidden
+                              ? "border-blue-500"
+                              : "border-gray-300 bg-gray-100"
+                          }`}
+                        >
+                          <option value="Yes">Yes</option>
+                          <option value="No">No</option>
+                        </select>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </fieldset>
+            ))}
+
+            {/* Button Add Phone */}
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={handleAddPhone}
+                disabled={
+                  !isEditing ||
+                  isForbidden ||
+                  (kycInfo?.phones?.length ?? 0) >= 3
+                }
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              >
+                Add Phone
               </button>
             </div>
           </div>

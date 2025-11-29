@@ -1,5 +1,6 @@
 import type { Addresses } from "./address";
 import type { Emails } from "./email";
+import type { Phones } from "./phone";
 import type { UserInfo } from "./user-info";
 import type { UserInfoFull } from "./user-info-full";
 
@@ -8,4 +9,5 @@ export type KYCInfo = UserInfoFull & UserInfo & {
   age?: string;  
   addresses?: Addresses;
   emails?: Emails;
+  phones?: Phones;
 };
