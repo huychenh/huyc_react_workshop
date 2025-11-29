@@ -5,6 +5,10 @@ import type { KYCInfo } from "../types/kyc-info";
 import type { Address } from "../types/address";
 import type { Email, Emails } from "../types/email";
 import type { Phone, Phones } from "../types/phone";
+import type {
+  IdentificationDocument,
+  IdentificationDocuments,
+} from "../types/identification-document";
 
 const normalizeKYC = (data: any): KYCInfo => {
   //Addresses
@@ -40,6 +44,23 @@ const normalizeKYC = (data: any): KYCInfo => {
     });
   }
 
+  //Identification Documents
+  const identificationDocuments: IdentificationDocuments = [];
+  if (data.identificationDocuments?.length) {
+    data.identificationDocuments.forEach((doc: any) => {
+      identificationDocuments.push({
+        type:
+          doc.type === "Passport" ||
+          doc.type === "National ID Card" ||
+          doc.type === "Driver's License"
+            ? doc.type
+            : "Passport",
+        expiryDate: doc.expiryDate || "",
+        document: doc.document || "",
+      });
+    });
+  }
+
   return {
     id: data.id,
     username: data.username || "",
@@ -66,6 +87,9 @@ const normalizeKYC = (data: any): KYCInfo => {
     //phones
     phones,
 
+    //identificationDocuments
+    identificationDocuments,
+
     // Company
     organization: data.company?.name || "",
     role: data.company?.title || "",
@@ -75,7 +99,13 @@ const normalizeKYC = (data: any): KYCInfo => {
 
 // Basic info (text inputs)
 const basicFields: Array<
-  [string, keyof Omit<KYCInfo, "addresses" | "emails" | "phones">]
+  [
+    string,
+    keyof Omit<
+      KYCInfo,
+      "addresses" | "emails" | "phones" | "identificationDocuments"
+    >
+  ]
 > = [
   ["First Name", "firstName"],
   ["Last Name", "lastName"],
@@ -356,6 +386,54 @@ const KYCInformation = () => {
   };
   //
 
+  //Function handleAddDocument
+  const handleAddDocument = () => {
+    if (!isEditing || isForbidden) return;
+
+    const newDoc: IdentificationDocument = {
+      type: "Passport", // default type
+      document: "",
+      expiryDate: "",
+    };
+
+    setKycInfo((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        identificationDocuments: [
+          ...(prev.identificationDocuments ?? []),
+          newDoc,
+        ],
+      };
+    });
+  };
+  //
+
+  //Function handleDocumentChange
+  const handleDocumentChange = (
+    index: number,
+    key: keyof IdentificationDocument,
+    value: string | File
+  ) => {
+    if (!kycInfo?.identificationDocuments) return;
+    const updatedDocs = [...kycInfo.identificationDocuments];
+    updatedDocs[index] = { ...updatedDocs[index], [key]: value };
+    setKycInfo({ ...kycInfo, identificationDocuments: updatedDocs });
+  };
+  //
+
+  // Function handleRemoveDocument
+  const handleRemoveDocument = (index: number) => {
+    if (!kycInfo?.identificationDocuments) return;
+
+    const updatedDocs = [...kycInfo.identificationDocuments];
+    updatedDocs.splice(index, 1); // xoá document ở vị trí index
+
+    setKycInfo({ ...kycInfo, identificationDocuments: updatedDocs });
+  };
+
+  //
+
   return (
     <div className="w-full bg-gray-100 p-4 flex justify-center">
       <div className="w-full max-w-full bg-white rounded-lg shadow-md p-6">
@@ -591,7 +669,6 @@ const KYCInformation = () => {
           </div>
 
           {/* Phones Area */}
-          {/* Phones Area */}
           <div className="border border-gray-400 rounded-md p-4 mb-6">
             <h3 className="text-sm font-semibold mb-2">Phones</h3>
 
@@ -699,6 +776,151 @@ const KYCInformation = () => {
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
                 Add Phone
+              </button>
+            </div>
+          </div>
+
+          {/* Identification Documents Area */}
+          <div className="border border-gray-400 rounded-md p-4 mb-6">
+            <h3 className="text-sm font-semibold mb-2">
+              Identification Documents
+            </h3>
+
+            {/* Map documents */}
+            {kycInfo.identificationDocuments?.map((doc, index) => (
+              <fieldset
+                key={index}
+                className="border border-gray-400 rounded-md p-4 mb-4"
+              >
+                <legend className="text-sm font-semibold px-2 flex items-center justify-between">
+                  <span>{`Document #${index + 1}`}</span> &nbsp;
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveDocument(index)}
+                    disabled={!isEditing || isForbidden}
+                    className="relative text-red-500 hover:text-red-700 disabled:opacity-50 group cursor-pointer"
+                  >
+                    ✕
+                    <span className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none shadow-lg">
+                      Remove Document
+                    </span>
+                  </button>
+                </legend>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+                  {/* Document Type */}
+                  <div>
+                    <label className="block text-gray-600">Type</label>
+                    <select
+                      value={doc.type}
+                      disabled={!isEditing || isForbidden}
+                      onChange={(e) =>
+                        handleDocumentChange(
+                          index,
+                          "type",
+                          e.target.value as
+                            | "Passport"
+                            | "National ID Card"
+                            | "Driver's License"
+                        )
+                      }
+                      className={`mt-1 w-full border px-2 py-1 rounded ${
+                        isEditing && !isForbidden
+                          ? "border-blue-500"
+                          : "border-gray-300 bg-gray-100"
+                      }`}
+                    >
+                      <option value="Passport">Passport</option>
+                      <option value="National ID Card">National ID Card</option>
+                      <option value="Driver's License">Driver's License</option>
+                    </select>
+                  </div>
+
+                  {/* Upload Document */}
+                  <div>
+                    <label className="block text-gray-600 mb-1">
+                      Upload Document
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <label
+                        className={`
+                                     px-4 py-1
+    bg-gradient-to-r from-amber-700 to-amber-800 
+    text-white rounded-lg cursor-pointer 
+    hover:bg-amber-900 
+    disabled:opacity-50
+    inline-flex items-center 
+    h-9
+                                  `}
+                      >
+                        Choose File
+                        <input
+                          type="file"
+                          accept=".pdf,.jpg,.jpeg,.png"
+                          disabled={!isEditing || isForbidden}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            handleDocumentChange(index, "document", file);
+                          }}
+                          className="hidden"
+                        />
+                      </label>
+
+                      <span className="text-gray-700 truncate max-w-xs">
+                        {doc.document
+                          ? typeof doc.document === "string"
+                            ? doc.document
+                            : doc.document.name
+                          : "No file chosen"}
+                      </span>
+                    </div>
+
+                    {doc.document && typeof doc.document !== "string" && (
+                      <p className="mt-1 text-sm text-gray-600">
+                        {doc.document.name}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Expiry Date */}
+                  <div>
+                    <label className="block text-gray-600">Expiry Date</label>
+                    <input
+                      type="date"
+                      value={doc.expiryDate || ""}
+                      readOnly={!isEditing || isForbidden}
+                      onChange={(e) =>
+                        handleDocumentChange(
+                          index,
+                          "expiryDate",
+                          e.target.value
+                        )
+                      }
+                      className={`mt-1 w-full border px-2 py-1 rounded ${
+                        isEditing && !isForbidden
+                          ? "border-blue-500"
+                          : "border-gray-300 bg-gray-100"
+                      }`}
+                    />
+                  </div>
+                </div>
+              </fieldset>
+            ))}
+
+            {/* Button Add Document */}
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={handleAddDocument}
+                disabled={
+                  !isEditing ||
+                  isForbidden ||
+                  (kycInfo?.identificationDocuments?.length ?? 0) >= 3
+                }
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              >
+                Add Document
               </button>
             </div>
           </div>
