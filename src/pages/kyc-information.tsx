@@ -434,71 +434,71 @@ const KYCInformation = () => {
                 </legend>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
-                  {/* Email Address */}
-                  <div>
-                    <label className="block text-gray-600">Email Address</label>
-                    <input
-                      type="email"
-                      value={email.email || ""}
-                      readOnly={!isEditing || isForbidden}
-                      onChange={(e) =>
-                        handleEmailChange(index, "email", e.target.value)
-                      }
-                      className={`mt-1 w-full border px-2 py-1 rounded ${
-                        isEditing && !isForbidden
-                          ? "border-blue-500"
-                          : "border-gray-300 bg-gray-100"
-                      }`}
-                    />
-                  </div>
+                  {emailFields.map(([label, key]) => (
+                    <div key={label}>
+                      <label className="block text-gray-600">{label}</label>
 
-                  {/* Type */}
-                  <div>
-                    <label className="block text-gray-600">Type</label>
-                    <select
-                      value={email.type}
-                      disabled={!isEditing || isForbidden}
-                      onChange={(e) =>
-                        handleEmailChange(
-                          index,
-                          "type",
-                          e.target.value as "Work" | "Personal"
-                        )
-                      }
-                      className={`mt-1 w-full border px-2 py-1 rounded ${
-                        isEditing && !isForbidden
-                          ? "border-blue-500"
-                          : "border-gray-300 bg-gray-100"
-                      }`}
-                    >
-                      <option value="Personal">Personal</option>
-                      <option value="Work">Work</option>
-                    </select>
-                  </div>
+                      {key === "email" && (
+                        <input
+                          type="email"
+                          value={email.email || ""}
+                          readOnly={!isEditing || isForbidden}
+                          onChange={(e) =>
+                            handleEmailChange(index, "email", e.target.value)
+                          }
+                          className={`mt-1 w-full border px-2 py-1 rounded ${
+                            isEditing && !isForbidden
+                              ? "border-blue-500"
+                              : "border-gray-300 bg-gray-100"
+                          }`}
+                        />
+                      )}
 
-                  {/* Preferred */}
-                  <div>
-                    <label className="block text-gray-600">Preferred</label>
-                    <select
-                      value={email.preferred ? "Yes" : "No"}
-                      disabled={!isEditing || isForbidden}
-                      onChange={(e) =>
-                        handleEmailChange(
-                          index,
-                          "preferred",
-                          e.target.value === "Yes"
-                        )
-                      }
-                      className={`mt-1 w-full border px-2 py-1 rounded ${
-                        isEditing && !isForbidden
-                          ? "border-blue-500"
-                          : "border-gray-300 bg-gray-100"
-                      }`}
-                    >
-                      <option value="Yes">Yes</option>
-                      <option value="No">No</option>
-                    </select>
-                  </div>
+                      {key === "type" && (
+                        <select
+                          value={email.type}
+                          disabled={!isEditing || isForbidden}
+                          onChange={(e) =>
+                            handleEmailChange(
+                              index,
+                              "type",
+                              e.target.value as "Work" | "Personal"
+                            )
+                          }
+                          className={`mt-1 w-full border px-2 py-1 rounded ${
+                            isEditing && !isForbidden
+                              ? "border-blue-500"
+                              : "border-gray-300 bg-gray-100"
+                          }`}
+                        >
+                          <option value="Personal">Personal</option>
+                          <option value="Work">Work</option>
+                        </select>
+                      )}
+
+                      {key === "preferred" && (
+                        <select
+                          value={email.preferred ? "Yes" : "No"}
+                          disabled={!isEditing || isForbidden}
+                          onChange={(e) =>
+                            handleEmailChange(
+                              index,
+                              "preferred",
+                              e.target.value === "Yes"
+                            )
+                          }
+                          className={`mt-1 w-full border px-2 py-1 rounded ${
+                            isEditing && !isForbidden
+                              ? "border-blue-500"
+                              : "border-gray-300 bg-gray-100"
+                          }`}
+                        >
+                          <option value="Yes">Yes</option>
+                          <option value="No">No</option>
+                        </select>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </fieldset>
             ))}
