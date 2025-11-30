@@ -190,7 +190,6 @@ const LIABILITY_TYPES: Liability["type"][] = [
   "Others",
 ];
 
-
 const KYCInformation = () => {
   const { id } = useParams();
 
@@ -680,6 +679,13 @@ const KYCInformation = () => {
 
     setKycInfo({ ...kycInfo, liabilities: updated });
   };
+  //
+
+  //
+  const totalLiabilities = kycInfo.liabilities?.reduce(
+    (sum, liab) => sum + (Number(liab.amount) || 0),
+    0
+  );
 
   //
 
@@ -1471,7 +1477,11 @@ const KYCInformation = () => {
           {/* Liabilities (C) Area */}
           <div className="border border-gray-400 rounded-md p-4 mb-6">
             <h3 className="text-sm font-semibold mb-2">Liabilities (C)</h3>
-
+            <span>
+              Liabilities are any outstanding debts or obligations you may have.
+              These can include loans such as personal loans, mortgages, or
+              other forms of debt.
+            </span>
             {/* Map liabilities */}
             {kycInfo.liabilities?.map((liab, index) => (
               <fieldset
@@ -1544,6 +1554,14 @@ const KYCInformation = () => {
                 </div>
               </fieldset>
             ))}
+
+            {/* Total Liabilities */}
+            <div className="mt-4 mb-2">
+              <label className="block text-gray-600 font-semibold">
+                Total Liabilities
+              </label>
+              <input type="number" value={totalLiabilities} disabled className="mt-1 w-full border px-2 py-1 rounded bg-gray-100 border-gray-300" />
+            </div>
 
             {/* Add Liability Button */}
             <div className="mt-4">
