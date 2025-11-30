@@ -154,6 +154,7 @@ const basicFields: Array<
       | "assets"
       | "liabilities"
       | "sourceWealths"
+      | "netWorths"
     >
   ]
 > = [
@@ -192,11 +193,7 @@ const LIABILITY_TYPES: Liability["type"][] = [
   "Others",
 ];
 
-const SOURCE_WEALTH_TYPES: SourceWealth["type"][] = [
-  "Inheritance",
-  "Donation",
-];
-
+const SOURCE_WEALTH_TYPES: SourceWealth["type"][] = ["Inheritance", "Donation"];
 
 const KYCInformation = () => {
   const { id } = useParams();
@@ -753,7 +750,16 @@ const KYCInformation = () => {
       sourceWealths: updatedSources,
     });
   };
+  //
 
+  //
+  const totalIncomes =
+    kycInfo.incomes?.reduce((sum, inc) => sum + (Number(inc.amount) || 0), 0) ??
+    0;
+  const totalAssets =
+    kycInfo.assets?.reduce((sum, inc) => sum + (Number(inc.amount) || 0), 0) ??
+    0;
+  const totalNetWorths = (totalIncomes ?? 0) + (totalAssets ?? 0) + (totalLiabilities ?? 0) + (totalSourceWealths ?? 0);
   //
 
   return (
@@ -1765,6 +1771,20 @@ const KYCInformation = () => {
               >
                 Add Wealth of Source
               </button>
+            </div>
+          </div>
+
+          {/* Net Worth Area */}
+          <div className="border border-gray-400 rounded-md p-4 mb-6">
+            <h3 className="text-sm font-semibold mb-2">Net Worth</h3>
+            <div className="mt-4 mb-2">
+              <label className="block text-gray-600 font-semibold">Total</label>
+              <input
+                type="number"
+                value={totalNetWorths}
+                disabled
+                className="mt-1 w-full border px-2 py-1 rounded bg-gray-100 border-gray-300"
+              />
             </div>
           </div>
         </div>
