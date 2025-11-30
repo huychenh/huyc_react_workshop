@@ -9,6 +9,10 @@ import type {
   IdentificationDocument,
   IdentificationDocuments,
 } from "../types/identification-document";
+import type { Occupation, Occupations } from "../types/occupation";
+import type { Income, Incomes } from "../types/income";
+import type { Asset, Assets } from "../types/asset";
+import type { Liability } from "../types/liability";
 
 const normalizeKYC = (data: any): KYCInfo => {
   //Addresses
@@ -61,6 +65,40 @@ const normalizeKYC = (data: any): KYCInfo => {
     });
   }
 
+  //Occupations
+  const occupations: Occupations = [];
+  if (data.occupations?.length) {
+    data.occupations.forEach((obj: any) => {
+      occupations.push({
+        name: obj.occupation,
+        fromDate: obj.fromDate || "",
+        toDate: obj.toDate || "",
+      });
+    });
+  }
+
+  //Incomes
+  const incomes: Incomes = [];
+  if (data.incomes?.length) {
+    data.incomes.forEach((obj: any) => {
+      incomes.push({
+        type: obj.type,
+        amount: obj.amount || "",
+      });
+    });
+  }
+
+  //Assets
+  const assets: Assets = [];
+  if (data.assets?.length) {
+    data.assets.forEach((obj: any) => {
+      assets.push({
+        type: obj.type,
+        amount: obj.amount || "",
+      });
+    });
+  }
+
   return {
     id: data.id,
     username: data.username || "",
@@ -90,6 +128,9 @@ const normalizeKYC = (data: any): KYCInfo => {
     //identificationDocuments
     identificationDocuments,
 
+    //occupations
+    occupations,
+
     // Company
     organization: data.company?.name || "",
     role: data.company?.title || "",
@@ -103,7 +144,14 @@ const basicFields: Array<
     string,
     keyof Omit<
       KYCInfo,
-      "addresses" | "emails" | "phones" | "identificationDocuments"
+      | "addresses"
+      | "emails"
+      | "phones"
+      | "identificationDocuments"
+      | "occupations"
+      | "incomes"
+      | "assets"
+      | "liabilities"
     >
   ]
 > = [
@@ -135,6 +183,13 @@ const phoneFields: Array<[string, keyof Phone]> = [
   ["Type", "type"],
   ["Preferred", "preferred"],
 ];
+
+const LIABILITY_TYPES: Liability["type"][] = [
+  "Personal Loan",
+  "Real Estate Loan",
+  "Others",
+];
+
 
 const KYCInformation = () => {
   const { id } = useParams();
@@ -430,6 +485,200 @@ const KYCInformation = () => {
     updatedDocs.splice(index, 1); // xoá document ở vị trí index
 
     setKycInfo({ ...kycInfo, identificationDocuments: updatedDocs });
+  };
+  //
+
+  //Function handleRemoveOccupation
+  const handleRemoveOccupation = (index: number) => {
+    //
+    if (!kycInfo?.occupations) return;
+
+    const updatedOccupations = [...kycInfo.occupations];
+    updatedOccupations.splice(index, 1);
+    setKycInfo({ ...kycInfo, occupations: updatedOccupations });
+    //
+  };
+  //
+
+  //Function handleOccupationChange
+  const handleOccupationChange = (
+    index: number,
+    key: keyof Occupation,
+    value: string
+  ) => {
+    if (!kycInfo?.occupations) return;
+
+    const updated = [...kycInfo.occupations];
+    updated[index] = { ...updated[index], [key]: value };
+
+    setKycInfo({ ...kycInfo, occupations: updated });
+  };
+  //
+
+  //Function handleAddOccupation
+  const handleAddOccupation = () => {
+    if (!isEditing || isForbidden) return;
+
+    const newOccupation: Occupation = {
+      name: "",
+      fromDate: "",
+      toDate: "",
+    };
+
+    setKycInfo((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        occupations: [...(prev.occupations ?? []), newOccupation],
+      };
+    });
+  };
+  //
+
+  //Function handleAddIncome
+  const handleAddIncome = () => {
+    if (!isEditing || isForbidden) return;
+
+    const newIncome: Income = {
+      type: "Salary", // default value
+      amount: 0,
+    };
+
+    setKycInfo((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        incomes: [...(prev.incomes ?? []), newIncome],
+      };
+    });
+  };
+  //
+
+  //Function handleIncomeChange
+  const handleIncomeChange = (
+    index: number,
+    key: keyof Income,
+    value: string
+  ) => {
+    if (!kycInfo?.incomes) return;
+
+    const updated = [...kycInfo.incomes];
+
+    updated[index] = {
+      ...updated[index],
+      [key]: key === "amount" ? Number(value) : value,
+    };
+
+    setKycInfo({ ...kycInfo, incomes: updated });
+  };
+  //
+
+  //Function handleRemoveIncome
+  const handleRemoveIncome = (index: number) => {
+    if (!kycInfo?.incomes) return;
+
+    const updatedIncomes = [...kycInfo.incomes];
+    updatedIncomes.splice(index, 1);
+
+    setKycInfo({ ...kycInfo, incomes: updatedIncomes });
+  };
+  //
+
+  //Function handleAddAsset
+  const handleAddAsset = () => {
+    if (!isEditing || isForbidden) return;
+
+    const newAsset: Asset = {
+      type: "Bond", // default value
+      amount: 0,
+    };
+
+    setKycInfo((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        assets: [...(prev.assets ?? []), newAsset],
+      };
+    });
+  };
+  //
+
+  //Function handleRemoveAsset
+  const handleRemoveAsset = (index: number) => {
+    if (!kycInfo?.assets) return;
+
+    const updatedAssets = [...kycInfo.assets];
+    updatedAssets.splice(index, 1);
+
+    setKycInfo({ ...kycInfo, assets: updatedAssets });
+  };
+  //
+
+  //Function handleAssetChange
+  const handleAssetChange = (
+    index: number,
+    key: keyof Asset,
+    value: string
+  ) => {
+    if (!kycInfo?.assets) return;
+
+    const updated = [...kycInfo.assets];
+
+    updated[index] = {
+      ...updated[index],
+      [key]: key === "amount" ? Number(value) : value,
+    };
+
+    setKycInfo({ ...kycInfo, assets: updated });
+  };
+  //
+
+  //Function handleAddLiability
+  const handleAddLiability = () => {
+    if (!isEditing || isForbidden) return;
+
+    const newLiability: Liability = {
+      type: "Personal Loan", // default value
+      amount: 0,
+    };
+
+    setKycInfo((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        liabilities: [...(prev.liabilities ?? []), newLiability],
+      };
+    });
+  };
+  //
+
+  //Function handleRemoveLiability
+  const handleRemoveLiability = (index: number) => {
+    if (!kycInfo?.liabilities) return;
+
+    const updatedLiabilities = [...kycInfo.liabilities];
+    updatedLiabilities.splice(index, 1);
+
+    setKycInfo({ ...kycInfo, liabilities: updatedLiabilities });
+  };
+  //
+
+  //Function handleLiabilityChange
+  const handleLiabilityChange = (
+    index: number,
+    key: keyof Liability,
+    value: string
+  ) => {
+    if (!kycInfo?.liabilities) return;
+
+    const updated = [...kycInfo.liabilities];
+
+    updated[index] = {
+      ...updated[index],
+      [key]: key === "amount" ? Number(value) : value,
+    };
+
+    setKycInfo({ ...kycInfo, liabilities: updated });
   };
 
   //
@@ -920,7 +1169,395 @@ const KYCInformation = () => {
                 }
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
-                Add Document
+                Add Identification Document
+              </button>
+            </div>
+          </div>
+
+          {/* Occupations Area */}
+          <div className="border border-gray-400 rounded-md p-4 mb-6">
+            <h3 className="text-sm font-semibold mb-2">Occupations</h3>
+
+            {/* Map occupations */}
+            {kycInfo.occupations?.map((occ, index) => (
+              <fieldset
+                key={index}
+                className="border border-gray-400 rounded-md p-4 mb-4"
+              >
+                <legend className="text-sm font-semibold px-2 flex items-center justify-between">
+                  <span>{`Occupation #${index + 1}`}</span>
+                  &nbsp;
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveOccupation(index)}
+                    disabled={!isEditing || isForbidden}
+                    className="relative text-red-500 hover:text-red-700 disabled:opacity-50 group cursor-pointer"
+                  >
+                    ✕
+                    <span className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none shadow-lg">
+                      Remove Occupation
+                    </span>
+                  </button>
+                </legend>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+                  {/* Name */}
+                  <div>
+                    <label className="block text-gray-600">Name</label>
+                    <input
+                      type="text"
+                      value={occ.name || ""}
+                      readOnly={!isEditing || isForbidden}
+                      onChange={(e) =>
+                        handleOccupationChange(index, "name", e.target.value)
+                      }
+                      className={`mt-1 w-full border px-2 py-1 rounded ${
+                        isEditing && !isForbidden
+                          ? "border-blue-500"
+                          : "border-gray-300 bg-gray-100"
+                      }`}
+                    />
+                  </div>
+
+                  {/* From Date */}
+                  <div>
+                    <label className="block text-gray-600">From Date</label>
+                    <input
+                      type="date"
+                      value={occ.fromDate || ""}
+                      readOnly={!isEditing || isForbidden}
+                      onChange={(e) =>
+                        handleOccupationChange(
+                          index,
+                          "fromDate",
+                          e.target.value
+                        )
+                      }
+                      className={`mt-1 w-full border px-2 py-1 rounded ${
+                        isEditing && !isForbidden
+                          ? "border-blue-500"
+                          : "border-gray-300 bg-gray-100"
+                      }`}
+                    />
+                  </div>
+
+                  {/* To Date */}
+                  <div>
+                    <label className="block text-gray-600">To Date</label>
+                    <input
+                      type="date"
+                      value={occ.toDate || ""}
+                      readOnly={!isEditing || isForbidden}
+                      onChange={(e) =>
+                        handleOccupationChange(index, "toDate", e.target.value)
+                      }
+                      className={`mt-1 w-full border px-2 py-1 rounded ${
+                        isEditing && !isForbidden
+                          ? "border-blue-500"
+                          : "border-gray-300 bg-gray-100"
+                      }`}
+                    />
+                  </div>
+                </div>
+              </fieldset>
+            ))}
+
+            {/* Add Occupation Button */}
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={handleAddOccupation}
+                disabled={
+                  !isEditing ||
+                  isForbidden ||
+                  (kycInfo?.occupations?.length ?? 0) >= 3
+                }
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              >
+                Add Occupation
+              </button>
+            </div>
+          </div>
+
+          {/* Incomes (A) Area */}
+          <div className="border border-gray-400 rounded-md p-4 mb-6">
+            <h3 className="text-sm font-semibold mb-2">Incomes (A)</h3>
+
+            {/* Map incomes */}
+            {kycInfo.incomes?.map((inc, index) => (
+              <fieldset
+                key={index}
+                className="border border-gray-400 rounded-md p-4 mb-4"
+              >
+                <legend className="text-sm font-semibold px-2 flex items-center justify-between">
+                  <span>{`Income #${index + 1}`}</span>
+                  &nbsp;
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveIncome(index)}
+                    disabled={!isEditing || isForbidden}
+                    className="relative text-red-500 hover:text-red-700 disabled:opacity-50 group cursor-pointer"
+                  >
+                    ✕
+                    <span className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none shadow-lg">
+                      Remove Income
+                    </span>
+                  </button>
+                </legend>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+                  {/* Type (ComboBox) */}
+                  <div>
+                    <label className="block text-gray-600">Type</label>
+                    <select
+                      value={inc.type}
+                      disabled={!isEditing || isForbidden}
+                      onChange={(e) =>
+                        handleIncomeChange(
+                          index,
+                          "type",
+                          e.target.value as "Salary" | "Investment" | "Others"
+                        )
+                      }
+                      className={`mt-1 w-full border px-2 py-1 rounded ${
+                        isEditing && !isForbidden
+                          ? "border-blue-500"
+                          : "border-gray-300 bg-gray-100"
+                      }`}
+                    >
+                      <option value="Salary">Salary</option>
+                      <option value="Investment">Investment</option>
+                      <option value="Others">Others</option>
+                    </select>
+                  </div>
+
+                  {/* Amount */}
+                  <div>
+                    <label className="block text-gray-600">
+                      Amount (Currency)
+                    </label>
+                    <input
+                      type="number"
+                      value={inc.amount || ""}
+                      readOnly={!isEditing || isForbidden}
+                      onChange={(e) =>
+                        handleIncomeChange(index, "amount", e.target.value)
+                      }
+                      className={`mt-1 w-full border px-2 py-1 rounded ${
+                        isEditing && !isForbidden
+                          ? "border-blue-500"
+                          : "border-gray-300 bg-gray-100"
+                      }`}
+                    />
+                  </div>
+                </div>
+              </fieldset>
+            ))}
+
+            {/* Add Income Button */}
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={handleAddIncome}
+                disabled={
+                  !isEditing ||
+                  isForbidden ||
+                  (kycInfo?.incomes?.length ?? 0) >= 3
+                }
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              >
+                Add Income
+              </button>
+            </div>
+          </div>
+
+          {/* Assets (B) Area */}
+          <div className="border border-gray-400 rounded-md p-4 mb-6">
+            <h3 className="text-sm font-semibold mb-2">Assets (B)</h3>
+
+            {/* Map assets */}
+            {kycInfo.assets?.map((asset, index) => (
+              <fieldset
+                key={index}
+                className="border border-gray-400 rounded-md p-4 mb-4"
+              >
+                <legend className="text-sm font-semibold px-2 flex items-center justify-between">
+                  <span>{`Asset #${index + 1}`}</span>
+                  &nbsp;
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveAsset(index)}
+                    disabled={!isEditing || isForbidden}
+                    className="relative text-red-500 hover:text-red-700 disabled:opacity-50 group cursor-pointer"
+                  >
+                    ✕
+                    <span className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none shadow-lg">
+                      Remove Asset
+                    </span>
+                  </button>
+                </legend>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+                  {/* Type (ComboBox) */}
+                  <div>
+                    <label className="block text-gray-600">Type</label>
+                    <select
+                      value={asset.type}
+                      disabled={!isEditing || isForbidden}
+                      onChange={(e) =>
+                        handleAssetChange(
+                          index,
+                          "type",
+                          e.target.value as
+                            | "Cash"
+                            | "Property"
+                            | "Investment"
+                            | "Others"
+                        )
+                      }
+                      className={`mt-1 w-full border px-2 py-1 rounded ${
+                        isEditing && !isForbidden
+                          ? "border-blue-500"
+                          : "border-gray-300 bg-gray-100"
+                      }`}
+                    >
+                      <option value="Cash">Cash</option>
+                      <option value="Property">Property</option>
+                      <option value="Investment">Investment</option>
+                      <option value="Others">Others</option>
+                    </select>
+                  </div>
+
+                  {/* Amount */}
+                  <div>
+                    <label className="block text-gray-600">
+                      Amount (Currency)
+                    </label>
+                    <input
+                      type="number"
+                      value={asset.amount || ""}
+                      readOnly={!isEditing || isForbidden}
+                      onChange={(e) =>
+                        handleAssetChange(index, "amount", e.target.value)
+                      }
+                      className={`mt-1 w-full border px-2 py-1 rounded ${
+                        isEditing && !isForbidden
+                          ? "border-blue-500"
+                          : "border-gray-300 bg-gray-100"
+                      }`}
+                    />
+                  </div>
+                </div>
+              </fieldset>
+            ))}
+
+            {/* Add Asset Button */}
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={handleAddAsset}
+                disabled={
+                  !isEditing ||
+                  isForbidden ||
+                  (kycInfo?.assets?.length ?? 0) >= 3
+                }
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              >
+                Add Asset
+              </button>
+            </div>
+          </div>
+
+          {/* Liabilities (C) Area */}
+          <div className="border border-gray-400 rounded-md p-4 mb-6">
+            <h3 className="text-sm font-semibold mb-2">Liabilities (C)</h3>
+
+            {/* Map liabilities */}
+            {kycInfo.liabilities?.map((liab, index) => (
+              <fieldset
+                key={index}
+                className="border border-gray-400 rounded-md p-4 mb-4"
+              >
+                <legend className="text-sm font-semibold px-2 flex items-center justify-between">
+                  <span>{`Income #${index + 1}`}</span>
+                  &nbsp;
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveLiability(index)}
+                    disabled={!isEditing || isForbidden}
+                    className="relative text-red-500 hover:text-red-700 disabled:opacity-50 group cursor-pointer"
+                  >
+                    ✕
+                    <span className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none shadow-lg">
+                      Remove Income
+                    </span>
+                  </button>
+                </legend>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+                  {/* Type (ComboBox) */}
+                  <div>
+                    <label className="block text-gray-600">Type</label>
+                    <select
+                      value={liab.type}
+                      disabled={!isEditing || isForbidden}
+                      onChange={(e) =>
+                        handleLiabilityChange(
+                          index,
+                          "type",
+                          e.target.value as Liability["type"]
+                        )
+                      }
+                      className={`mt-1 w-full border px-2 py-1 rounded ${
+                        isEditing && !isForbidden
+                          ? "border-blue-500"
+                          : "border-gray-300 bg-gray-100"
+                      }`}
+                    >
+                      {LIABILITY_TYPES.map((type) => (
+                        <option key={type} value={type}>
+                          {type}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Amount */}
+                  <div>
+                    <label className="block text-gray-600">
+                      Amount (Currency)
+                    </label>
+                    <input
+                      type="number"
+                      value={liab.amount || ""}
+                      readOnly={!isEditing || isForbidden}
+                      onChange={(e) =>
+                        handleLiabilityChange(index, "amount", e.target.value)
+                      }
+                      className={`mt-1 w-full border px-2 py-1 rounded ${
+                        isEditing && !isForbidden
+                          ? "border-blue-500"
+                          : "border-gray-300 bg-gray-100"
+                      }`}
+                    />
+                  </div>
+                </div>
+              </fieldset>
+            ))}
+
+            {/* Add Liability Button */}
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={handleAddLiability}
+                disabled={
+                  !isEditing ||
+                  isForbidden ||
+                  (kycInfo?.liabilities?.length ?? 0) >= 3
+                }
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              >
+                Add Liability
               </button>
             </div>
           </div>

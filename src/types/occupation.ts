@@ -1,7 +1,7 @@
 export type Occupation = {
     name: string;
-    fromYear: number;
-    toYear: number;
+    fromDate: string;
+    toDate: string;
 };
 
 export type Occupations = Occupation[];
