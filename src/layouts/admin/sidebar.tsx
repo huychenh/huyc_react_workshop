@@ -37,6 +37,16 @@ const Sidebar = () => {
         >
           <span>My Submissions</span>
         </NavLink>
+
+        {/* Submit Review */}
+        <NavLink
+          to={ADMIN_URL.SUBMITREVIEW}
+          className={({ isActive }) =>
+            `${baseClasses} ${isActive ? "bg-gray-300 text-black" : ""}`
+          }
+        >
+          <span>Submit Review</span>
+        </NavLink>
       </nav>
     </aside>
   );

@@ -14,6 +14,7 @@ import type { Income, Incomes } from "../types/income";
 import type { Asset, Assets } from "../types/asset";
 import type { Liability } from "../types/liability";
 import type { SourceWealth } from "../types/source-wealth";
+import type { InvestmentExperience } from "../types/investment-experience";
 
 const normalizeKYC = (data: any): KYCInfo => {
   //Addresses
@@ -155,6 +156,7 @@ const basicFields: Array<
       | "liabilities"
       | "sourceWealths"
       | "netWorths"
+      | "investmentExperiences"
     >
   ]
 > = [
@@ -752,14 +754,38 @@ const KYCInformation = () => {
   };
   //
 
-  //
+  //totalNetWorths
   const totalIncomes =
     kycInfo.incomes?.reduce((sum, inc) => sum + (Number(inc.amount) || 0), 0) ??
     0;
   const totalAssets =
     kycInfo.assets?.reduce((sum, inc) => sum + (Number(inc.amount) || 0), 0) ??
     0;
-  const totalNetWorths = (totalIncomes ?? 0) + (totalAssets ?? 0) + (totalLiabilities ?? 0) + (totalSourceWealths ?? 0);
+  const totalNetWorths =
+    (totalIncomes ?? 0) +
+    (totalAssets ?? 0) +
+    (totalLiabilities ?? 0) +
+    (totalSourceWealths ?? 0);
+  //
+
+  //Function handleInvestmentChange
+  const handleInvestmentChange = (
+    index: number,
+    key: keyof InvestmentExperience,
+    value: InvestmentExperience[keyof InvestmentExperience]
+  ) => {
+    if (!kycInfo?.investmentExperiences) return;
+
+    const updated = [...kycInfo.investmentExperiences];
+
+    updated[index] = {
+      ...updated[index],
+      [key]: value,
+    };
+
+    setKycInfo({ ...kycInfo, investmentExperiences: updated });
+  };
+
   //
 
   return (
@@ -1785,6 +1811,71 @@ const KYCInformation = () => {
                 disabled
                 className="mt-1 w-full border px-2 py-1 rounded bg-gray-100 border-gray-300"
               />
+            </div>
+          </div>
+
+          {/* Investment Experience Area */}
+          <div className="border border-gray-400 rounded-md p-4 mb-6">
+            <h3 className="text-sm font-semibold mb-2">
+              Investment Experience and Objectives
+            </h3>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+              {/* Experience in Financial Markets */}
+              <div>
+                <label className="block text-gray-600">
+                  Experience in Financial Markets
+                </label>
+                <select
+                  value={kycInfo.investmentExperiences?.[0]?.experience || ""}
+                  disabled={!isEditing || isForbidden}
+                  onChange={(e) =>
+                    handleInvestmentChange(
+                      0, // index of the item in the array
+                      "experience",
+                      e.target.value as InvestmentExperience["experience"]
+                    )
+                  }
+                  className={`mt-1 w-full border px-2 py-1 rounded ${
+                    isEditing && !isForbidden
+                      ? "border-blue-500"
+                      : "border-gray-300 bg-gray-100"
+                  }`}
+                >
+                  <option value="< 5 years">&lt; 5 years</option>
+                  <option value="> 5 years and < 10 years">
+                    &gt; 5 years and &lt; 10 years
+                  </option>
+                  <option value="> 10 years">&gt; 10 years</option>
+                </select>
+              </div>
+
+              {/* Risk Tolerance */}
+              <div>
+                <label className="block text-gray-600">Risk Tolerance</label>
+                <select
+                  value={
+                    kycInfo.investmentExperiences?.[0]?.riskTolerance || ""
+                  }
+                  disabled={!isEditing || isForbidden}
+                  onChange={(e) =>
+                    handleInvestmentChange(
+                      0, // index of the experience in the array
+                      "riskTolerance",
+                      e.target.value as InvestmentExperience["riskTolerance"]
+                    )
+                  }
+                  className={`mt-1 w-full border px-2 py-1 rounded ${
+                    isEditing && !isForbidden
+                      ? "border-blue-500"
+                      : "border-gray-300 bg-gray-100"
+                  }`}
+                >
+                  <option value="10%">10%</option>
+                  <option value="30%">30%</option>
+                  <option value="All-in">All-in</option>
+                </select>
+              </div>
             </div>
           </div>
         </div>

@@ -3,6 +3,7 @@ import type { Assets } from "./asset";
 import type { Emails } from "./email";
 import type { IdentificationDocuments } from "./identification-document";
 import type { Incomes } from "./income";
+import type { InvestmentExperiences } from "./investment-experience";
 import type { Liabilities } from "./liability";
 import type { NetWorths } from "./net-worth";
 import type { Occupations } from "./occupation";
@@ -24,4 +25,5 @@ export type KYCInfo = UserInfoFull & UserInfo & {
   liabilities?: Liabilities;
   sourceWealths?: SourceWealths;
   netWorths?: NetWorths;
+  investmentExperiences?: InvestmentExperiences;  
 };

@@ -12,6 +12,7 @@ export const ADMIN_URL = {
   BASE: ADMIN_BASE,
   DASHBOARD: `${ADMIN_BASE}/dashboard`,
   SUBMISSIONS: `${ADMIN_BASE}/submissions`,
+  SUBMITREVIEW: `${ADMIN_BASE}/submitreview`,
   PROFILE: `${ADMIN_BASE}/profile`,
   LOGOUT: `${ADMIN_BASE}/logout`,
   USERS: `${ADMIN_BASE}/users`,
