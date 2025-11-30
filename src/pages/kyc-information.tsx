@@ -13,6 +13,7 @@ import type { Occupation, Occupations } from "../types/occupation";
 import type { Income, Incomes } from "../types/income";
 import type { Asset, Assets } from "../types/asset";
 import type { Liability } from "../types/liability";
+import type { SourceWealth } from "../types/source-wealth";
 
 const normalizeKYC = (data: any): KYCInfo => {
   //Addresses
@@ -152,6 +153,7 @@ const basicFields: Array<
       | "incomes"
       | "assets"
       | "liabilities"
+      | "sourceWealths"
     >
   ]
 > = [
@@ -189,6 +191,12 @@ const LIABILITY_TYPES: Liability["type"][] = [
   "Real Estate Loan",
   "Others",
 ];
+
+const SOURCE_WEALTH_TYPES: SourceWealth["type"][] = [
+  "Inheritance",
+  "Donation",
+];
+
 
 const KYCInformation = () => {
   const { id } = useParams();
@@ -686,6 +694,65 @@ const KYCInformation = () => {
     (sum, liab) => sum + (Number(liab.amount) || 0),
     0
   );
+  //
+
+  //Function handleAddSourceWealth
+  const handleAddSourceWealth = () => {
+    if (!isEditing || isForbidden) return;
+
+    const newSource: SourceWealth = {
+      type: "Inheritance",
+      amount: 0,
+    };
+
+    setKycInfo((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        sourceWealths: [...(prev.sourceWealths ?? []), newSource],
+      };
+    });
+  };
+
+  //
+  const totalSourceWealths = kycInfo.sourceWealths?.reduce(
+    (sum, source) => sum + (Number(source.amount) || 0),
+    0
+  );
+
+  //
+
+  //Function handleSourceWealthChange
+  const handleSourceWealthChange = (
+    index: number,
+    key: keyof SourceWealth,
+    value: string
+  ) => {
+    if (!kycInfo?.sourceWealths) return;
+
+    const updated = [...kycInfo.sourceWealths];
+
+    updated[index] = {
+      ...updated[index],
+      [key]: key === "amount" ? Number(value) : value,
+    };
+
+    setKycInfo({ ...kycInfo, sourceWealths: updated });
+  };
+  //
+
+  //Function handleRemoveSourceWealth
+  const handleRemoveSourceWealth = (index: number) => {
+    if (!kycInfo?.sourceWealths) return;
+
+    const updatedSources = [...kycInfo.sourceWealths];
+    updatedSources.splice(index, 1);
+
+    setKycInfo({
+      ...kycInfo,
+      sourceWealths: updatedSources,
+    });
+  };
 
   //
 
@@ -1560,7 +1627,12 @@ const KYCInformation = () => {
               <label className="block text-gray-600 font-semibold">
                 Total Liabilities
               </label>
-              <input type="number" value={totalLiabilities} disabled className="mt-1 w-full border px-2 py-1 rounded bg-gray-100 border-gray-300" />
+              <input
+                type="number"
+                value={totalLiabilities}
+                disabled
+                className="mt-1 w-full border px-2 py-1 rounded bg-gray-100 border-gray-300"
+              />
             </div>
 
             {/* Add Liability Button */}
@@ -1576,6 +1648,122 @@ const KYCInformation = () => {
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
                 Add Liability
+              </button>
+            </div>
+          </div>
+
+          {/* Source of Wealth (D) Area */}
+          <div className="border border-gray-400 rounded-md p-4 mb-6">
+            <h3 className="text-sm font-semibold mb-2">Source of Wealth (D)</h3>
+            <span>
+              This section identifies the origin of your wealth, such as any
+              inheritance or donations you may have received. It's important for
+              financial transparency.
+            </span>
+
+            {/* Map source of wealth */}
+            {kycInfo.sourceWealths?.map((source, index) => (
+              <fieldset
+                key={index}
+                className="border border-gray-400 rounded-md p-4 mb-4"
+              >
+                <legend className="text-sm font-semibold px-2 flex items-center justify-between">
+                  <span>{`Income #${index + 1}`}</span>
+                  &nbsp;
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveSourceWealth(index)}
+                    disabled={!isEditing || isForbidden}
+                    className="relative text-red-500 hover:text-red-700 disabled:opacity-50 group cursor-pointer"
+                  >
+                    ✕
+                    <span className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none shadow-lg">
+                      Remove Income
+                    </span>
+                  </button>
+                </legend>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+                  {/* Type */}
+                  <div>
+                    <label className="block text-gray-600">Type</label>
+                    <select
+                      value={source.type}
+                      disabled={!isEditing || isForbidden}
+                      onChange={(e) =>
+                        handleSourceWealthChange(
+                          index,
+                          "type",
+                          e.target.value as SourceWealth["type"]
+                        )
+                      }
+                      className={`mt-1 w-full border px-2 py-1 rounded ${
+                        isEditing && !isForbidden
+                          ? "border-blue-500"
+                          : "border-gray-300 bg-gray-100"
+                      }`}
+                    >
+                      {SOURCE_WEALTH_TYPES.map((type) => (
+                        <option key={type} value={type}>
+                          {type}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Amount */}
+                  <div>
+                    <label className="block text-gray-600">
+                      Amount (Currency)
+                    </label>
+                    <input
+                      type="number"
+                      value={source.amount || ""}
+                      readOnly={!isEditing || isForbidden}
+                      onChange={(e) =>
+                        handleSourceWealthChange(
+                          index,
+                          "amount",
+                          e.target.value
+                        )
+                      }
+                      className={`mt-1 w-full border px-2 py-1 rounded ${
+                        isEditing && !isForbidden
+                          ? "border-blue-500"
+                          : "border-gray-300 bg-gray-100"
+                      }`}
+                    />
+                  </div>
+                </div>
+              </fieldset>
+            ))}
+
+            {/* Total Source of Wealth */}
+            <div className="mt-4 mb-2">
+              <label className="block text-gray-600 font-semibold">
+                Total Source of Wealth
+              </label>
+              <input
+                type="number"
+                value={totalSourceWealths}
+                disabled
+                className="mt-1 w-full border px-2 py-1 rounded bg-gray-100 border-gray-300"
+              />
+            </div>
+
+            {/* Add Source Button */}
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={handleAddSourceWealth}
+                disabled={
+                  !isEditing ||
+                  isForbidden ||
+                  (kycInfo?.sourceWealths?.length ?? 0) >= 3
+                }
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              >
+                Add Wealth of Source
               </button>
             </div>
           </div>
