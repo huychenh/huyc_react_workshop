@@ -15,15 +15,27 @@ const KYCSubmission = () => {
   }>({ index: null, action: "" });
 
   const normalizeSubmission = (item: any): SubmissionInfo => {
-    const today = new Date().toISOString().split("T")[0];
+    const randomGeneratedDate = randomDate(
+      new Date("2024-01-01"),
+      new Date("2025-12-31")
+    );
 
     return {
       id: item.id,
       name: `${item.firstName ?? ""} ${item.lastName ?? ""}`.trim(),
       status: item.kyc_status ?? "Pending",
-      date: item.createdAt ? item.createdAt.split("T")[0] : today,
+      date: item.createdAt ? item.createdAt.split("T")[0] : randomGeneratedDate,
     };
   };
+
+  //Function randomDate
+  const randomDate = (start: Date, end: Date): string => {
+    const date = new Date(
+      start.getTime() + Math.random() * (end.getTime() - start.getTime())
+    );
+    return date.toISOString().split("T")[0];
+  };
+
 
   // Fetch submissions
   useEffect(() => {
@@ -104,7 +116,7 @@ const KYCSubmission = () => {
             {submissions.map((submission, index) => (
               <tr key={index} className="hover:bg-gray-50">
                 {/* Name link */}
-                <td className="px-4 py-2 border-b">                  
+                <td className="px-4 py-2 border-b">
                   <Link
                     to={goToResult()}
                     state={{ submission }}
