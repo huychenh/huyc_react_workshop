@@ -5,5 +5,5 @@ export type UserInfo = {
   firstName: string;
   lastName: string;
   gender: "male" | "female";
-  avatar: string;
+  image: string;
 };

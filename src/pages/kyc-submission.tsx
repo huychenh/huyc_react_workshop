@@ -25,6 +25,7 @@ const KYCSubmission = () => {
       name: `${item.firstName ?? ""} ${item.lastName ?? ""}`.trim(),
       status: item.kyc_status ?? "Pending",
       date: item.createdAt ? item.createdAt.split("T")[0] : randomGeneratedDate,
+      userId: item.userId ?? item.id
     };
   };
 
@@ -47,7 +48,6 @@ const KYCSubmission = () => {
 
         const data = await res.json();
 
-        // dummyjson.com/users trả về { users: [...] }
         const normalized: SubmissionInfo[] = Array.isArray(data.users)
           ? data.users.map((item: any) => normalizeSubmission(item))
           : [];

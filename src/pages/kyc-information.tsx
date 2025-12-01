@@ -114,7 +114,7 @@ const normalizeKYC = (data: any): KYCInfo => {
     // Basic
     email: data.email || "",
     gender: data.gender || "",
-    avatar: data.image || "",
+    image: data.image || "",
     phoneNumber: data.phone || "",
     birthday: data.birthDate || "",
 

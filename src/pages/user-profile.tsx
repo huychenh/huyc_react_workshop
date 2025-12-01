@@ -11,7 +11,7 @@ const normalizeUser = (data: any): UserInfoFull => {
     lastName: data.lastName || "",
     email: data.email || "",
     gender: data.gender || "",
-    avatar: data.image || "",
+    image: data.image || "",
 
     // Basic
     phoneNumber: data.phone || "",
@@ -136,7 +136,7 @@ const UserProfile = () => {
           <div className="flex-shrink-0">
             <img
               src={
-                user.avatar ||
+                user.image ||
                 (user.gender === "male" ? "/images/male.jpg" : "/images/female.jpg")
               }
               alt="Profile"
@@ -170,7 +170,7 @@ const UserProfile = () => {
                     const file = e.target.files?.[0];
                     if (file) {
                       const url = URL.createObjectURL(file);
-                      setUser({ ...user, avatar: url });
+                      setUser({ ...user, image: url });
                     }
                   }}
                 />
@@ -184,8 +184,8 @@ const UserProfile = () => {
                   : "bg-gray-500 text-white hover:bg-gray-400"
                   }`}
                 onClick={() => {
-                  if (!isEditing || isForbidden) return;
-                  setUser({ ...user, avatar: "" });
+                  if (!isEditing || isForbidden) return;                  
+                  setUser(prev => prev ? { ...prev, image: originalUser?.image || "" } : null);
                 }}
               >
                 Delete
@@ -256,7 +256,7 @@ const UserProfile = () => {
           )}
 
           <button
-            className="px-4 py-2 bg-gray-300 rounded cursor-pointer hover:bg-gray-400"            
+            className="px-4 py-2 bg-gray-300 rounded cursor-pointer hover:bg-gray-400"
             onClick={() => navigate(`${ADMIN_URL.KYC}/${user.id}`)}
           >
             KYC

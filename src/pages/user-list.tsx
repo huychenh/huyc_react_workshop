@@ -68,7 +68,7 @@ const UserList = () => {
                   <td className="px-4 py-2 border-b">
                     <img
                       src={
-                        user.avatar ||
+                        user.image ||
                         (user.gender === "male" ? "/images/male.jpg" : "/images/female.jpg")
                       }
                       alt={user.username}
