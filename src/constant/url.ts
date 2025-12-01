@@ -12,7 +12,7 @@ export const ADMIN_URL = {
   BASE: ADMIN_BASE,
   DASHBOARD: `${ADMIN_BASE}/dashboard`,
   SUBMISSIONS: `${ADMIN_BASE}/submissions`,
-  SUBMITREVIEW: `${ADMIN_BASE}/submitreview`,
+  SUBMISSION_RESULTS: `${ADMIN_BASE}/results`,
   PROFILE: `${ADMIN_BASE}/profile`,
   LOGOUT: `${ADMIN_BASE}/logout`,
   USERS: `${ADMIN_BASE}/users`,
@@ -26,3 +26,5 @@ export const API_URL_GET_USER_BY_ID = (id: number | string) => `${API_URL_BASE}/
 export const API_URL_UPDATE_USER = (id: number | string) => `${API_URL_BASE}/users/${id}`;
 export const API_URL_GET_KYC_BY_ID = (id: number | string) => `${API_URL_BASE}/users/${id}`;
 export const API_URL_UPDATE_KYC = (id: number | string) => `${API_URL_BASE}/users/${id}`;
+export const API_URL_GET_KYC_SUBMISSIONS = `${API_URL_BASE}/users`;
+export const API_URL_GET_KYC_SUBMISSION_BY_ID = (id: number | string) => `${API_URL_BASE}/users/${id}`;

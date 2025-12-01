@@ -35,17 +35,17 @@ const Sidebar = () => {
             `${baseClasses} ${isActive ? "bg-gray-300 text-black" : ""}`
           }
         >
-          <span>My Submissions</span>
+          <span>Submissions</span>
         </NavLink>
 
         {/* Submit Review */}
         <NavLink
-          to={ADMIN_URL.SUBMITREVIEW}
+          to={ADMIN_URL.SUBMISSION_RESULTS}
           className={({ isActive }) =>
             `${baseClasses} ${isActive ? "bg-gray-300 text-black" : ""}`
           }
         >
-          <span>Submit Review</span>
+          <span>Submission Results</span>
         </NavLink>
       </nav>
     </aside>
