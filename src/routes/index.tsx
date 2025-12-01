@@ -64,7 +64,7 @@ const Router = createBrowserRouter([
         Component: KYCSubmission,
       },
       {
-        path: `${ADMIN_URL.SUBMISSION_RESULTS}/:id`,
+        path: ADMIN_URL.SUBMISSION_RESULTS,
         Component: KYCSubmissionResult,
       },
       {

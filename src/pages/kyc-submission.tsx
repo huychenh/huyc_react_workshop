@@ -83,7 +83,7 @@ const KYCSubmission = () => {
   if (!submissions.length) return <div>No submissions found.</div>;
 
   //goToResult
-  const goToResult = (id: number) => `${ADMIN_URL.SUBMISSION_RESULTS}/${id}`;
+  const goToResult = () => `${ADMIN_URL.SUBMISSION_RESULTS}`;
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
@@ -104,9 +104,10 @@ const KYCSubmission = () => {
             {submissions.map((submission, index) => (
               <tr key={index} className="hover:bg-gray-50">
                 {/* Name link */}
-                <td className="px-4 py-2 border-b">
+                <td className="px-4 py-2 border-b">                  
                   <Link
-                    to={goToResult(submission.id)}
+                    to={goToResult()}
+                    state={{ submission }}
                     className="text-blue-600 hover:underline cursor-pointer"
                   >
                     {submission.name}
