@@ -2,47 +2,47 @@ import { useEffect, useState } from "react";
 import type { UserInfo } from "../types/user-info";
 import { ADMIN_URL, API_URL_GET_LIST_USERS } from "../constant/url";
 import { useNavigate } from "react-router-dom";
+import { useUserContext } from "../layouts/admin/user-context";
 
 const UserList = () => {
-  const [users, setUsers] = useState<UserInfo[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null); // Inline confirm
   const navigate = useNavigate();
 
-  // Fetch users
+  const { users, filteredUsers, setFilteredUsers, loading: contextLoading } = useUserContext();
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null); // Inline confirm
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch users only if context empty
   useEffect(() => {
     const fetchUsers = async () => {
+      if (users.length > 0) return;
       try {
-        setLoading(true);
         const response = await fetch(API_URL_GET_LIST_USERS);
         if (!response.ok) throw new Error("Failed to fetch users");
         const data = await response.json();
-        setUsers(data.users);
+        setFilteredUsers(data.users);
       } catch (err: any) {
         setError(err.message || "Something went wrong");
-      } finally {
-        setLoading(false);
       }
     };
 
     fetchUsers();
-  }, []);
+  }, [users, setFilteredUsers]);
 
-  // Delete user locally
   const handleDeleteUser = (id: number) => {
-    setUsers((prev) => prev.filter((user) => user.id !== id));
-    setConfirmDeleteId(null); // reset confirm state
+    const updated = filteredUsers.filter((user) => user.id !== id);
+    setFilteredUsers(updated);
+    setConfirmDeleteId(null);
   };
 
-  if (loading) return <p className="text-center py-4">Loading users...</p>;
+  if (contextLoading) return <p className="text-center py-4">Loading users...</p>;
   if (error) return <p className="text-center py-4 text-red-500">{error}</p>;
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
       <h2 className="text-xl font-semibold mb-4">Client List</h2>
 
-      <div className="overflow-x-auto">
+      {/* Search */}
+      <div className="overflow-x-auto mt-4">
         <table className="w-full text-left border border-gray-200">
           <thead className="bg-gray-100">
             <tr>
@@ -57,20 +57,19 @@ const UserList = () => {
           </thead>
 
           <tbody>
-            {users.length === 0 ? (
+            {filteredUsers.length === 0 ? (
               <tr>
                 <td colSpan={7} className="text-center py-4 text-gray-500">
                   No users found
                 </td>
               </tr>
             ) : (
-              users.map((user: UserInfo) => (
+              filteredUsers.map((user: UserInfo) => (
                 <tr key={user.id} className="hover:bg-gray-50">
                   <td className="px-4 py-2 border-b">
                     <img
                       src={
-                        user.image ||
-                        (user.gender === "male" ? "/images/male.jpg" : "/images/female.jpg")
+                        user.image || (user.gender === "male" ? "/images/male.jpg" : "/images/female.jpg")
                       }
                       alt={user.username}
                       className="w-10 h-10 rounded-full border"
@@ -119,6 +118,7 @@ const UserList = () => {
           </tbody>
         </table>
 
+        {/* Dummy Pagination */}
         <div className="flex justify-end mt-4 space-x-2">
           <button className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 cursor-pointer" disabled>
             Previous
