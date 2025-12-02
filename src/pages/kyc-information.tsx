@@ -123,7 +123,7 @@ const KYCInformation = () => {
     ) {
       setErrors(newErrors);
       setEmailErrors(newEmailErrors);
-      setError("Please fill all required fields.");
+      setError("Please fill all required fields."); 
       return false;
     }
 
@@ -152,7 +152,7 @@ const KYCInformation = () => {
       setSuccessMessage("User updated successfully!");
       setTimeout(() => setSuccessMessage(null), 3000);
 
-      return true; // save thành công
+      return true;
     } catch (err: any) {
       setError(err.message || "Error updating user");
       return false;
@@ -814,7 +814,7 @@ const KYCInformation = () => {
             <h3 className="text-sm font-semibold mb-2">Emails</h3>
 
             {/* Map emails */}
-            {kycInfo?.emails?.map((email, index) => (
+            {kycInfo?.emails?.map((obj, index) => (
               <fieldset
                 key={index}
                 className="border border-gray-400 rounded-md p-4 mb-4"
@@ -842,7 +842,7 @@ const KYCInformation = () => {
                       {key === "email" && (
                         <input
                           type="email"
-                          value={email.email || ""}
+                          value={obj.email || ""}
                           readOnly={!isEditing || isForbidden}
                           onChange={(e) => handleEmailChange(index, "email", e.target.value)}
                           className={`mt-1 w-full border px-2 py-1 rounded ${emailErrors[index]?.email
@@ -857,7 +857,7 @@ const KYCInformation = () => {
 
                       {key === "type" && (
                         <select
-                          value={email.type}
+                          value={obj.type}
                           disabled={!isEditing || isForbidden}
                           onChange={(e) =>
                             handleEmailChange(
@@ -878,7 +878,7 @@ const KYCInformation = () => {
 
                       {key === "preferred" && (
                         <select
-                          value={email.preferred ? "Yes" : "No"}
+                          value={obj.preferred ? "Yes" : "No"}
                           disabled={!isEditing || isForbidden}
                           onChange={(e) =>
                             handleEmailChange(
