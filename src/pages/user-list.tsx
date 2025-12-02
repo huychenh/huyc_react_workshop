@@ -7,16 +7,16 @@ const UserList = () => {
   const [users, setUsers] = useState<UserInfo[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null); // Inline confirm
   const navigate = useNavigate();
 
+  // Fetch users
   useEffect(() => {
     const fetchUsers = async () => {
       try {
         setLoading(true);
         const response = await fetch(API_URL_GET_LIST_USERS);
-        if (!response.ok) {
-          throw new Error("Failed to fetch users");
-        }
+        if (!response.ok) throw new Error("Failed to fetch users");
         const data = await response.json();
         setUsers(data.users);
       } catch (err: any) {
@@ -29,13 +29,14 @@ const UserList = () => {
     fetchUsers();
   }, []);
 
-  if (loading) {
-    return <p className="text-center py-4">Loading users...</p>;
-  }
+  // Delete user locally
+  const handleDeleteUser = (id: number) => {
+    setUsers((prev) => prev.filter((user) => user.id !== id));
+    setConfirmDeleteId(null); // reset confirm state
+  };
 
-  if (error) {
-    return <p className="text-center py-4 text-red-500">{error}</p>;
-  }
+  if (loading) return <p className="text-center py-4">Loading users...</p>;
+  if (error) return <p className="text-center py-4 text-red-500">{error}</p>;
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
@@ -80,16 +81,37 @@ const UserList = () => {
                   <td className="px-4 py-2 border-b">{user.firstName}</td>
                   <td className="px-4 py-2 border-b">{user.lastName}</td>
                   <td className="px-4 py-2 border-b">{user.gender}</td>
-                  <td className="px-4 py-2 border-b space-x-2">                    
+                  <td className="px-4 py-2 border-b space-x-2">
                     <button
                       onClick={() => navigate(`${ADMIN_URL.PROFILE}/${user.id}`)}
                       className="px-3 py-1 border border-blue-500 text-blue-500 rounded hover:bg-blue-50 cursor-pointer"
                     >
                       View
                     </button>
-                    <button className="px-3 py-1 border border-red-500 text-red-500 rounded hover:bg-red-50 cursor-pointer">
-                      Delete
-                    </button>
+
+                    {confirmDeleteId === user.id ? (
+                      <>
+                        <button
+                          onClick={() => handleDeleteUser(user.id)}
+                          className="px-3 py-1 bg-red-500 text-white rounded cursor-pointer"
+                        >
+                          Yes
+                        </button>
+                        <button
+                          onClick={() => setConfirmDeleteId(null)}
+                          className="px-3 py-1 bg-gray-300 rounded cursor-pointer"
+                        >
+                          No
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={() => setConfirmDeleteId(user.id)}
+                        className="px-3 py-1 border border-red-500 text-red-500 rounded hover:bg-red-50 cursor-pointer"
+                      >
+                        Delete
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))
