@@ -3,199 +3,18 @@ import { useParams } from "react-router-dom";
 import { API_URL_GET_USER_BY_ID, API_URL_UPDATE_USER } from "../constant/url";
 import type { KYCInfo } from "../types/kyc-info";
 import type { Address } from "../types/address";
-import type { Email, Emails } from "../types/email";
-import type { Phone, Phones } from "../types/phone";
+import type { Email } from "../types/email";
+import type { Phone } from "../types/phone";
 import type {
   IdentificationDocument,
-  IdentificationDocuments,
 } from "../types/identification-document";
-import type { Occupation, Occupations } from "../types/occupation";
-import type { Income, Incomes } from "../types/income";
-import type { Asset, Assets } from "../types/asset";
+import type { Occupation } from "../types/occupation";
+import type { Income } from "../types/income";
+import type { Asset } from "../types/asset";
 import type { Liability } from "../types/liability";
 import type { SourceWealth } from "../types/source-wealth";
 import type { InvestmentExperience } from "../types/investment-experience";
-
-const normalizeKYC = (data: any): KYCInfo => {
-  //Addresses
-  const addresses: Address[] = [];
-
-  if (data.address) {
-    addresses.push({
-      country: data.address.country || "",
-      city: data.address.city || "",
-      street: data.address.street || data.address.address || "",
-      postalCode: data.address.zipCode || data.address.postalCode || "",
-      type: "Mailing", // default type
-    });
-  }
-
-  //Emails
-  const emails: Emails = [];
-  if (data.email) {
-    emails.push({
-      email: data.email,
-      type: "Personal", // default type
-      preferred: true, // default preferred
-    });
-  }
-
-  //Phones
-  const phones: Phones = [];
-  if (data.phone) {
-    phones.push({
-      number: data.phone,
-      type: "Personal", // default type
-      preferred: true, // default preferred
-    });
-  }
-
-  //Identification Documents
-  const identificationDocuments: IdentificationDocuments = [];
-  if (data.identificationDocuments?.length) {
-    data.identificationDocuments.forEach((doc: any) => {
-      identificationDocuments.push({
-        type:
-          doc.type === "Passport" ||
-          doc.type === "National ID Card" ||
-          doc.type === "Driver's License"
-            ? doc.type
-            : "Passport",
-        expiryDate: doc.expiryDate || "",
-        document: doc.document || "",
-      });
-    });
-  }
-
-  //Occupations
-  const occupations: Occupations = [];
-  if (data.occupations?.length) {
-    data.occupations.forEach((obj: any) => {
-      occupations.push({
-        name: obj.occupation,
-        fromDate: obj.fromDate || "",
-        toDate: obj.toDate || "",
-      });
-    });
-  }
-
-  //Incomes
-  const incomes: Incomes = [];
-  if (data.incomes?.length) {
-    data.incomes.forEach((obj: any) => {
-      incomes.push({
-        type: obj.type,
-        amount: obj.amount || "",
-      });
-    });
-  }
-
-  //Assets
-  const assets: Assets = [];
-  if (data.assets?.length) {
-    data.assets.forEach((obj: any) => {
-      assets.push({
-        type: obj.type,
-        amount: obj.amount || "",
-      });
-    });
-  }
-
-  return {
-    id: data.id,
-    username: data.username || "",
-
-    // Name
-    firstName: data.firstName || "",
-    lastName: data.lastName || "",
-    middleName: data.middleName || "",
-    age: data.age?.toString() || "",
-
-    // Basic
-    email: data.email || "",
-    gender: data.gender || "",
-    image: data.image || "",
-    phoneNumber: data.phone || "",
-    birthday: data.birthDate || "",
-
-    // Addresses
-    addresses,
-
-    //emails
-    emails,
-
-    //phones
-    phones,
-
-    //identificationDocuments
-    identificationDocuments,
-
-    //occupations
-    occupations,
-
-    // Company
-    organization: data.company?.name || "",
-    role: data.company?.title || "",
-    department: data.company?.department || "",
-  };
-};
-
-// Basic info (text inputs)
-const basicFields: Array<
-  [
-    string,
-    keyof Omit<
-      KYCInfo,
-      | "addresses"
-      | "emails"
-      | "phones"
-      | "identificationDocuments"
-      | "occupations"
-      | "incomes"
-      | "assets"
-      | "liabilities"
-      | "sourceWealths"
-      | "netWorths"
-      | "investmentExperiences"
-    >
-  ]
-> = [
-  ["First Name", "firstName"],
-  ["Last Name", "lastName"],
-  ["Middle Name", "middleName"],
-  ["Birthday", "birthday"],
-  ["Age", "age"],
-];
-
-// Addresses
-const addressFields: Array<[string, keyof Address]> = [
-  ["Country", "country"],
-  ["City", "city"],
-  ["Street", "street"],
-  ["Postal Code", "postalCode"],
-];
-
-// Emails
-const emailFields: Array<[string, keyof Email]> = [
-  ["Email Address", "email"],
-  ["Type", "type"],
-  ["Preferred", "preferred"],
-];
-
-// Phones
-const phoneFields: Array<[string, keyof Phone]> = [
-  ["Phone Number", "number"],
-  ["Type", "type"],
-  ["Preferred", "preferred"],
-];
-
-const LIABILITY_TYPES: Liability["type"][] = [
-  "Personal Loan",
-  "Real Estate Loan",
-  "Others",
-];
-
-const SOURCE_WEALTH_TYPES: SourceWealth["type"][] = ["Inheritance", "Donation"];
+import { addressFields, basicFields, emailFields, LIABILITY_TYPES, normalizeKYC, phoneFields, SOURCE_WEALTH_TYPES } from "../utils/normalize-kyc";
 
 const KYCInformation = () => {
   const { id } = useParams();
@@ -211,6 +30,7 @@ const KYCInformation = () => {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [errors, setErrors] = useState<Record<string, boolean>>({});
 
   // Fetch KYC info
   useEffect(() => {
@@ -252,9 +72,25 @@ const KYCInformation = () => {
     setKycInfo({ ...kycInfo, addresses: newAddresses });
   };
 
-  const saveKYCChanges = async () => {
-    if (!kycInfo) return;
+  const saveKYCChanges = async (): Promise<boolean> => {
+    if (!kycInfo) return false;
+
+    const newErrors: Record<string, boolean> = {};
+    const requiredFields: Array<keyof KYCInfo> = ["firstName", "lastName", "birthday"];
+    requiredFields.forEach((key) => {
+      if (!kycInfo[key] || kycInfo[key].toString().trim() === "") {
+        newErrors[key] = true;
+      }
+    });
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      setError("Please fill all required fields.");
+      return false; // validation fail
+    }
+
     try {
+      setErrors({});
       setSaving(true);
       setError(null);
       setSuccessMessage(null);
@@ -274,12 +110,17 @@ const KYCInformation = () => {
       setOriginalKycInfo(normalized);
       setSuccessMessage("User updated successfully!");
       setTimeout(() => setSuccessMessage(null), 3000);
+
+      return true; // save thành công
     } catch (err: any) {
       setError(err.message || "Error updating user");
+      return false;
     } finally {
       setSaving(false);
     }
   };
+
+
 
   const handleCancel = () => {
     if (!originalKycInfo) return;
@@ -294,12 +135,12 @@ const KYCInformation = () => {
       </div>
     );
 
-  if (error || !kycInfo)
-    return (
-      <div className="p-6 text-center text-red-500 text-lg font-medium">
-        {error || "User not found"}
-      </div>
-    );
+  // if (error || !kycInfo)
+  //   return (
+  //     <div className="p-6 text-center text-red-500 text-lg font-medium">
+  //       {error || "User not found"}
+  //     </div>
+  //   );
 
   //Function Add Address
   const MAX_ADDRESSES = 3;
@@ -689,7 +530,7 @@ const KYCInformation = () => {
   //
 
   //
-  const totalLiabilities = kycInfo.liabilities?.reduce(
+  const totalLiabilities = kycInfo?.liabilities?.reduce(
     (sum, liab) => sum + (Number(liab.amount) || 0),
     0
   );
@@ -714,7 +555,7 @@ const KYCInformation = () => {
   };
 
   //
-  const totalSourceWealths = kycInfo.sourceWealths?.reduce(
+  const totalSourceWealths = kycInfo?.sourceWealths?.reduce(
     (sum, source) => sum + (Number(source.amount) || 0),
     0
   );
@@ -756,10 +597,10 @@ const KYCInformation = () => {
 
   //totalNetWorths
   const totalIncomes =
-    kycInfo.incomes?.reduce((sum, inc) => sum + (Number(inc.amount) || 0), 0) ??
+    kycInfo?.incomes?.reduce((sum, inc) => sum + (Number(inc.amount) || 0), 0) ??
     0;
   const totalAssets =
-    kycInfo.assets?.reduce((sum, inc) => sum + (Number(inc.amount) || 0), 0) ??
+    kycInfo?.assets?.reduce((sum, inc) => sum + (Number(inc.amount) || 0), 0) ??
     0;
   const totalNetWorths =
     (totalIncomes ?? 0) +
@@ -799,26 +640,51 @@ const KYCInformation = () => {
 
         <h1 className="text-2xl font-bold mb-6">Financial Status</h1>
 
+        {error && (
+          <div className="mb-4 text-red-500 font-bold text-center">
+            {error}
+          </div>
+        )}
+
         {/* Basic Information */}
         <div className="border border-gray-300 rounded-lg p-4 mb-6">
           <h2 className="text-xl font-semibold mb-4">Basic Information</h2>
+          {Object.entries(errors).length > 0 && (
+            <div className="mb-4">
+              {Object.entries(errors).map(([key, message]) => (
+                <p key={key} className="text-red-500 font-bold text-center mt-1">
+                  {message}
+                </p>
+              ))}
+            </div>
+          )}
+
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {basicFields.map(([label, key]) => (
+            {basicFields.map(([label, key, required]) => (
               <div key={label}>
-                <label className="block text-gray-600">{label}</label>
+                <label className="block text-gray-600">
+                  {label} {required && <span className="text-red-500">*</span>}
+                </label>
+
                 <input
                   type="text"
-                  value={kycInfo[key] || ""}
+                  value={kycInfo?.[key] || ""}
                   readOnly={!isEditing || isForbidden}
                   onChange={(e) => handleChange(key, e.target.value)}
-                  className={`mt-1 w-full border px-2 py-1 rounded ${
-                    isEditing && !isForbidden
+                  className={`mt-1 w-full border px-2 py-1 rounded ${errors[key]
+                    ? "border-red-500 bg-red-100"
+                    : isEditing && !isForbidden
                       ? "border-blue-500"
                       : "border-gray-300 bg-gray-100"
-                  }`}
+                    }`}
                 />
+
+
               </div>
             ))}
+
+
           </div>
         </div>
 
@@ -830,7 +696,7 @@ const KYCInformation = () => {
             <h3 className="text-sm font-semibold mb-2">Addresses</h3>
 
             {/* Map addresses */}
-            {kycInfo.addresses?.map((addr, index) => (
+            {kycInfo?.addresses?.map((addr, index) => (
               <fieldset
                 key={index}
                 className="border border-gray-400 rounded-md p-4 mb-4"
@@ -861,11 +727,10 @@ const KYCInformation = () => {
                         onChange={(e) =>
                           handleAddressChange(index, key, e.target.value)
                         }
-                        className={`mt-1 w-full border px-2 py-1 rounded ${
-                          isEditing && !isForbidden
-                            ? "border-blue-500"
-                            : "border-gray-300 bg-gray-100"
-                        }`}
+                        className={`mt-1 w-full border px-2 py-1 rounded ${isEditing && !isForbidden
+                          ? "border-blue-500"
+                          : "border-gray-300 bg-gray-100"
+                          }`}
                       />
                     </div>
                   ))}
@@ -878,11 +743,10 @@ const KYCInformation = () => {
                       onChange={(e) =>
                         handleAddressChange(index, "type", e.target.value)
                       }
-                      className={`mt-1 w-full border px-2 py-1 rounded ${
-                        isEditing && !isForbidden
-                          ? "border-blue-500"
-                          : "border-gray-300 bg-gray-100"
-                      }`}
+                      className={`mt-1 w-full border px-2 py-1 rounded ${isEditing && !isForbidden
+                        ? "border-blue-500"
+                        : "border-gray-300 bg-gray-100"
+                        }`}
                     >
                       <option value="Mailing">Mailing</option>
                       <option value="Work">Work</option>
@@ -915,7 +779,7 @@ const KYCInformation = () => {
             <h3 className="text-sm font-semibold mb-2">Emails</h3>
 
             {/* Map emails */}
-            {kycInfo.emails?.map((email, index) => (
+            {kycInfo?.emails?.map((email, index) => (
               <fieldset
                 key={index}
                 className="border border-gray-400 rounded-md p-4 mb-4"
@@ -948,11 +812,10 @@ const KYCInformation = () => {
                           onChange={(e) =>
                             handleEmailChange(index, "email", e.target.value)
                           }
-                          className={`mt-1 w-full border px-2 py-1 rounded ${
-                            isEditing && !isForbidden
-                              ? "border-blue-500"
-                              : "border-gray-300 bg-gray-100"
-                          }`}
+                          className={`mt-1 w-full border px-2 py-1 rounded ${isEditing && !isForbidden
+                            ? "border-blue-500"
+                            : "border-gray-300 bg-gray-100"
+                            }`}
                         />
                       )}
 
@@ -967,11 +830,10 @@ const KYCInformation = () => {
                               e.target.value as "Work" | "Personal"
                             )
                           }
-                          className={`mt-1 w-full border px-2 py-1 rounded ${
-                            isEditing && !isForbidden
-                              ? "border-blue-500"
-                              : "border-gray-300 bg-gray-100"
-                          }`}
+                          className={`mt-1 w-full border px-2 py-1 rounded ${isEditing && !isForbidden
+                            ? "border-blue-500"
+                            : "border-gray-300 bg-gray-100"
+                            }`}
                         >
                           <option value="Personal">Personal</option>
                           <option value="Work">Work</option>
@@ -989,11 +851,10 @@ const KYCInformation = () => {
                               e.target.value === "Yes"
                             )
                           }
-                          className={`mt-1 w-full border px-2 py-1 rounded ${
-                            isEditing && !isForbidden
-                              ? "border-blue-500"
-                              : "border-gray-300 bg-gray-100"
-                          }`}
+                          className={`mt-1 w-full border px-2 py-1 rounded ${isEditing && !isForbidden
+                            ? "border-blue-500"
+                            : "border-gray-300 bg-gray-100"
+                            }`}
                         >
                           <option value="Yes">Yes</option>
                           <option value="No">No</option>
@@ -1027,7 +888,7 @@ const KYCInformation = () => {
             <h3 className="text-sm font-semibold mb-2">Phones</h3>
 
             {/* Map phones */}
-            {kycInfo.phones?.map((phone, index) => (
+            {kycInfo?.phones?.map((phone, index) => (
               <fieldset
                 key={index}
                 className="border border-gray-400 rounded-md p-4 mb-4"
@@ -1060,11 +921,10 @@ const KYCInformation = () => {
                           onChange={(e) =>
                             handlePhoneChange(index, "number", e.target.value)
                           }
-                          className={`mt-1 w-full border px-2 py-1 rounded ${
-                            isEditing && !isForbidden
-                              ? "border-blue-500"
-                              : "border-gray-300 bg-gray-100"
-                          }`}
+                          className={`mt-1 w-full border px-2 py-1 rounded ${isEditing && !isForbidden
+                            ? "border-blue-500"
+                            : "border-gray-300 bg-gray-100"
+                            }`}
                         />
                       )}
 
@@ -1079,11 +939,10 @@ const KYCInformation = () => {
                               e.target.value as "Work" | "Personal"
                             )
                           }
-                          className={`mt-1 w-full border px-2 py-1 rounded ${
-                            isEditing && !isForbidden
-                              ? "border-blue-500"
-                              : "border-gray-300 bg-gray-100"
-                          }`}
+                          className={`mt-1 w-full border px-2 py-1 rounded ${isEditing && !isForbidden
+                            ? "border-blue-500"
+                            : "border-gray-300 bg-gray-100"
+                            }`}
                         >
                           <option value="Personal">Personal</option>
                           <option value="Work">Work</option>
@@ -1101,11 +960,10 @@ const KYCInformation = () => {
                               e.target.value === "Yes"
                             )
                           }
-                          className={`mt-1 w-full border px-2 py-1 rounded ${
-                            isEditing && !isForbidden
-                              ? "border-blue-500"
-                              : "border-gray-300 bg-gray-100"
-                          }`}
+                          className={`mt-1 w-full border px-2 py-1 rounded ${isEditing && !isForbidden
+                            ? "border-blue-500"
+                            : "border-gray-300 bg-gray-100"
+                            }`}
                         >
                           <option value="Yes">Yes</option>
                           <option value="No">No</option>
@@ -1141,7 +999,7 @@ const KYCInformation = () => {
             </h3>
 
             {/* Map documents */}
-            {kycInfo.identificationDocuments?.map((doc, index) => (
+            {kycInfo?.identificationDocuments?.map((doc, index) => (
               <fieldset
                 key={index}
                 className="border border-gray-400 rounded-md p-4 mb-4"
@@ -1173,16 +1031,15 @@ const KYCInformation = () => {
                           index,
                           "type",
                           e.target.value as
-                            | "Passport"
-                            | "National ID Card"
-                            | "Driver's License"
+                          | "Passport"
+                          | "National ID Card"
+                          | "Driver's License"
                         )
                       }
-                      className={`mt-1 w-full border px-2 py-1 rounded ${
-                        isEditing && !isForbidden
-                          ? "border-blue-500"
-                          : "border-gray-300 bg-gray-100"
-                      }`}
+                      className={`mt-1 w-full border px-2 py-1 rounded ${isEditing && !isForbidden
+                        ? "border-blue-500"
+                        : "border-gray-300 bg-gray-100"
+                        }`}
                     >
                       <option value="Passport">Passport</option>
                       <option value="National ID Card">National ID Card</option>
@@ -1251,11 +1108,10 @@ const KYCInformation = () => {
                           e.target.value
                         )
                       }
-                      className={`mt-1 w-full border px-2 py-1 rounded ${
-                        isEditing && !isForbidden
-                          ? "border-blue-500"
-                          : "border-gray-300 bg-gray-100"
-                      }`}
+                      className={`mt-1 w-full border px-2 py-1 rounded ${isEditing && !isForbidden
+                        ? "border-blue-500"
+                        : "border-gray-300 bg-gray-100"
+                        }`}
                     />
                   </div>
                 </div>
@@ -1284,7 +1140,7 @@ const KYCInformation = () => {
             <h3 className="text-sm font-semibold mb-2">Occupations</h3>
 
             {/* Map occupations */}
-            {kycInfo.occupations?.map((occ, index) => (
+            {kycInfo?.occupations?.map((occ, index) => (
               <fieldset
                 key={index}
                 className="border border-gray-400 rounded-md p-4 mb-4"
@@ -1316,11 +1172,10 @@ const KYCInformation = () => {
                       onChange={(e) =>
                         handleOccupationChange(index, "name", e.target.value)
                       }
-                      className={`mt-1 w-full border px-2 py-1 rounded ${
-                        isEditing && !isForbidden
-                          ? "border-blue-500"
-                          : "border-gray-300 bg-gray-100"
-                      }`}
+                      className={`mt-1 w-full border px-2 py-1 rounded ${isEditing && !isForbidden
+                        ? "border-blue-500"
+                        : "border-gray-300 bg-gray-100"
+                        }`}
                     />
                   </div>
 
@@ -1338,11 +1193,10 @@ const KYCInformation = () => {
                           e.target.value
                         )
                       }
-                      className={`mt-1 w-full border px-2 py-1 rounded ${
-                        isEditing && !isForbidden
-                          ? "border-blue-500"
-                          : "border-gray-300 bg-gray-100"
-                      }`}
+                      className={`mt-1 w-full border px-2 py-1 rounded ${isEditing && !isForbidden
+                        ? "border-blue-500"
+                        : "border-gray-300 bg-gray-100"
+                        }`}
                     />
                   </div>
 
@@ -1356,11 +1210,10 @@ const KYCInformation = () => {
                       onChange={(e) =>
                         handleOccupationChange(index, "toDate", e.target.value)
                       }
-                      className={`mt-1 w-full border px-2 py-1 rounded ${
-                        isEditing && !isForbidden
-                          ? "border-blue-500"
-                          : "border-gray-300 bg-gray-100"
-                      }`}
+                      className={`mt-1 w-full border px-2 py-1 rounded ${isEditing && !isForbidden
+                        ? "border-blue-500"
+                        : "border-gray-300 bg-gray-100"
+                        }`}
                     />
                   </div>
                 </div>
@@ -1389,7 +1242,7 @@ const KYCInformation = () => {
             <h3 className="text-sm font-semibold mb-2">Incomes (A)</h3>
 
             {/* Map incomes */}
-            {kycInfo.incomes?.map((inc, index) => (
+            {kycInfo?.incomes?.map((inc, index) => (
               <fieldset
                 key={index}
                 className="border border-gray-400 rounded-md p-4 mb-4"
@@ -1424,11 +1277,10 @@ const KYCInformation = () => {
                           e.target.value as "Salary" | "Investment" | "Others"
                         )
                       }
-                      className={`mt-1 w-full border px-2 py-1 rounded ${
-                        isEditing && !isForbidden
-                          ? "border-blue-500"
-                          : "border-gray-300 bg-gray-100"
-                      }`}
+                      className={`mt-1 w-full border px-2 py-1 rounded ${isEditing && !isForbidden
+                        ? "border-blue-500"
+                        : "border-gray-300 bg-gray-100"
+                        }`}
                     >
                       <option value="Salary">Salary</option>
                       <option value="Investment">Investment</option>
@@ -1448,11 +1300,10 @@ const KYCInformation = () => {
                       onChange={(e) =>
                         handleIncomeChange(index, "amount", e.target.value)
                       }
-                      className={`mt-1 w-full border px-2 py-1 rounded ${
-                        isEditing && !isForbidden
-                          ? "border-blue-500"
-                          : "border-gray-300 bg-gray-100"
-                      }`}
+                      className={`mt-1 w-full border px-2 py-1 rounded ${isEditing && !isForbidden
+                        ? "border-blue-500"
+                        : "border-gray-300 bg-gray-100"
+                        }`}
                     />
                   </div>
                 </div>
@@ -1481,7 +1332,7 @@ const KYCInformation = () => {
             <h3 className="text-sm font-semibold mb-2">Assets (B)</h3>
 
             {/* Map assets */}
-            {kycInfo.assets?.map((asset, index) => (
+            {kycInfo?.assets?.map((asset, index) => (
               <fieldset
                 key={index}
                 className="border border-gray-400 rounded-md p-4 mb-4"
@@ -1514,17 +1365,16 @@ const KYCInformation = () => {
                           index,
                           "type",
                           e.target.value as
-                            | "Cash"
-                            | "Property"
-                            | "Investment"
-                            | "Others"
+                          | "Cash"
+                          | "Property"
+                          | "Investment"
+                          | "Others"
                         )
                       }
-                      className={`mt-1 w-full border px-2 py-1 rounded ${
-                        isEditing && !isForbidden
-                          ? "border-blue-500"
-                          : "border-gray-300 bg-gray-100"
-                      }`}
+                      className={`mt-1 w-full border px-2 py-1 rounded ${isEditing && !isForbidden
+                        ? "border-blue-500"
+                        : "border-gray-300 bg-gray-100"
+                        }`}
                     >
                       <option value="Cash">Cash</option>
                       <option value="Property">Property</option>
@@ -1545,11 +1395,10 @@ const KYCInformation = () => {
                       onChange={(e) =>
                         handleAssetChange(index, "amount", e.target.value)
                       }
-                      className={`mt-1 w-full border px-2 py-1 rounded ${
-                        isEditing && !isForbidden
-                          ? "border-blue-500"
-                          : "border-gray-300 bg-gray-100"
-                      }`}
+                      className={`mt-1 w-full border px-2 py-1 rounded ${isEditing && !isForbidden
+                        ? "border-blue-500"
+                        : "border-gray-300 bg-gray-100"
+                        }`}
                     />
                   </div>
                 </div>
@@ -1582,7 +1431,7 @@ const KYCInformation = () => {
               other forms of debt.
             </span>
             {/* Map liabilities */}
-            {kycInfo.liabilities?.map((liab, index) => (
+            {kycInfo?.liabilities?.map((liab, index) => (
               <fieldset
                 key={index}
                 className="border border-gray-400 rounded-md p-4 mb-4"
@@ -1617,11 +1466,10 @@ const KYCInformation = () => {
                           e.target.value as Liability["type"]
                         )
                       }
-                      className={`mt-1 w-full border px-2 py-1 rounded ${
-                        isEditing && !isForbidden
-                          ? "border-blue-500"
-                          : "border-gray-300 bg-gray-100"
-                      }`}
+                      className={`mt-1 w-full border px-2 py-1 rounded ${isEditing && !isForbidden
+                        ? "border-blue-500"
+                        : "border-gray-300 bg-gray-100"
+                        }`}
                     >
                       {LIABILITY_TYPES.map((type) => (
                         <option key={type} value={type}>
@@ -1643,11 +1491,10 @@ const KYCInformation = () => {
                       onChange={(e) =>
                         handleLiabilityChange(index, "amount", e.target.value)
                       }
-                      className={`mt-1 w-full border px-2 py-1 rounded ${
-                        isEditing && !isForbidden
-                          ? "border-blue-500"
-                          : "border-gray-300 bg-gray-100"
-                      }`}
+                      className={`mt-1 w-full border px-2 py-1 rounded ${isEditing && !isForbidden
+                        ? "border-blue-500"
+                        : "border-gray-300 bg-gray-100"
+                        }`}
                     />
                   </div>
                 </div>
@@ -1694,7 +1541,7 @@ const KYCInformation = () => {
             </span>
 
             {/* Map source of wealth */}
-            {kycInfo.sourceWealths?.map((source, index) => (
+            {kycInfo?.sourceWealths?.map((source, index) => (
               <fieldset
                 key={index}
                 className="border border-gray-400 rounded-md p-4 mb-4"
@@ -1729,11 +1576,10 @@ const KYCInformation = () => {
                           e.target.value as SourceWealth["type"]
                         )
                       }
-                      className={`mt-1 w-full border px-2 py-1 rounded ${
-                        isEditing && !isForbidden
-                          ? "border-blue-500"
-                          : "border-gray-300 bg-gray-100"
-                      }`}
+                      className={`mt-1 w-full border px-2 py-1 rounded ${isEditing && !isForbidden
+                        ? "border-blue-500"
+                        : "border-gray-300 bg-gray-100"
+                        }`}
                     >
                       {SOURCE_WEALTH_TYPES.map((type) => (
                         <option key={type} value={type}>
@@ -1759,11 +1605,10 @@ const KYCInformation = () => {
                           e.target.value
                         )
                       }
-                      className={`mt-1 w-full border px-2 py-1 rounded ${
-                        isEditing && !isForbidden
-                          ? "border-blue-500"
-                          : "border-gray-300 bg-gray-100"
-                      }`}
+                      className={`mt-1 w-full border px-2 py-1 rounded ${isEditing && !isForbidden
+                        ? "border-blue-500"
+                        : "border-gray-300 bg-gray-100"
+                        }`}
                     />
                   </div>
                 </div>
@@ -1827,7 +1672,7 @@ const KYCInformation = () => {
                   Experience in Financial Markets
                 </label>
                 <select
-                  value={kycInfo.investmentExperiences?.[0]?.experience || ""}
+                  value={kycInfo?.investmentExperiences?.[0]?.experience || ""}
                   disabled={!isEditing || isForbidden}
                   onChange={(e) =>
                     handleInvestmentChange(
@@ -1836,11 +1681,10 @@ const KYCInformation = () => {
                       e.target.value as InvestmentExperience["experience"]
                     )
                   }
-                  className={`mt-1 w-full border px-2 py-1 rounded ${
-                    isEditing && !isForbidden
-                      ? "border-blue-500"
-                      : "border-gray-300 bg-gray-100"
-                  }`}
+                  className={`mt-1 w-full border px-2 py-1 rounded ${isEditing && !isForbidden
+                    ? "border-blue-500"
+                    : "border-gray-300 bg-gray-100"
+                    }`}
                 >
                   <option value="< 5 years">&lt; 5 years</option>
                   <option value="> 5 years and < 10 years">
@@ -1855,7 +1699,7 @@ const KYCInformation = () => {
                 <label className="block text-gray-600">Risk Tolerance</label>
                 <select
                   value={
-                    kycInfo.investmentExperiences?.[0]?.riskTolerance || ""
+                    kycInfo?.investmentExperiences?.[0]?.riskTolerance || ""
                   }
                   disabled={!isEditing || isForbidden}
                   onChange={(e) =>
@@ -1865,11 +1709,10 @@ const KYCInformation = () => {
                       e.target.value as InvestmentExperience["riskTolerance"]
                     )
                   }
-                  className={`mt-1 w-full border px-2 py-1 rounded ${
-                    isEditing && !isForbidden
-                      ? "border-blue-500"
-                      : "border-gray-300 bg-gray-100"
-                  }`}
+                  className={`mt-1 w-full border px-2 py-1 rounded ${isEditing && !isForbidden
+                    ? "border-blue-500"
+                    : "border-gray-300 bg-gray-100"
+                    }`}
                 >
                   <option value="10%">10%</option>
                   <option value="30%">30%</option>
@@ -1883,20 +1726,24 @@ const KYCInformation = () => {
         {/* Buttons */}
         <div className="mt-6 flex flex-wrap gap-2">
           <button
-            className={`px-4 py-2 rounded text-white ${
-              isForbidden
+            className={`px-4 py-2 rounded text-white ${isForbidden
                 ? "bg-gray-400 cursor-not-allowed"
                 : "bg-blue-600 hover:bg-blue-700"
-            } ${saving ? "opacity-50 cursor-not-allowed" : ""}`}
+              } ${saving ? "opacity-50 cursor-not-allowed" : ""}`}
             disabled={saving || isForbidden}
             onClick={async () => {
               if (isForbidden) return;
-              if (isEditing && !saving) await saveKYCChanges();
-              setIsEditing(!isEditing);
+              if (isEditing && !saving) {
+                const success = await saveKYCChanges();
+                if (success) setIsEditing(false);
+              } else {
+                setIsEditing(true);
+              }
             }}
           >
             {isEditing ? (saving ? "Saving..." : "Save") : "Edit"}
           </button>
+
 
           {isEditing && !isForbidden && (
             <button
