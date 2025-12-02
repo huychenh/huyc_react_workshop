@@ -2,11 +2,16 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import type { SubmissionInfo } from "../types/submission-info";
 import { ADMIN_URL, API_URL_GET_KYC_SUBMISSIONS } from "../constant/url";
+import { getLoggedInUser } from "../constant/auth";
 
 const KYCSubmission = () => {
   const [loading, setLoading] = useState(true);
   const [submissions, setSubmissions] = useState<SubmissionInfo[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  const loggedUser = getLoggedInUser();
+  const loggedUserId = loggedUser?.id ?? 0;
+  const loggedUserRole = loggedUser?.role ?? "";
 
   // Inline confirmation state
   const [confirmAction, setConfirmAction] = useState<{
@@ -15,34 +20,21 @@ const KYCSubmission = () => {
   }>({ index: null, action: "" });
 
   const normalizeSubmission = (item: any): SubmissionInfo => {
-    const randomGeneratedDate = randomDate(
-      new Date("2024-01-01"),
-      new Date("2025-12-31")
-    );
-
     return {
       id: item.id,
       name: `${item.firstName ?? ""} ${item.lastName ?? ""}`.trim(),
       status: item.kyc_status ?? "Pending",
-      date: item.createdAt ? item.createdAt.split("T")[0] : randomGeneratedDate,
-      userId: item.userId ?? item.id
+      date: item.createdAt ? item.createdAt.split("T")[0] : "2024-01-01",
+      userId: item.userId ?? item.id,
     };
   };
-
-  //Function randomDate
-  const randomDate = (start: Date, end: Date): string => {
-    const date = new Date(
-      start.getTime() + Math.random() * (end.getTime() - start.getTime())
-    );
-    return date.toISOString().split("T")[0];
-  };
-
 
   // Fetch submissions
   useEffect(() => {
     const fetchSubmissions = async () => {
       try {
         setLoading(true);
+
         const res = await fetch(API_URL_GET_KYC_SUBMISSIONS);
         if (!res.ok) throw new Error("Failed to load submissions");
 
@@ -52,7 +44,12 @@ const KYCSubmission = () => {
           ? data.users.map((item: any) => normalizeSubmission(item))
           : [];
 
-        setSubmissions(normalized);
+        if (loggedUserRole === "officer") {
+          setSubmissions(normalized);
+        } else {
+          setSubmissions([]);
+        }
+
         setError(null);
       } catch (err: any) {
         setError(err.message || "Failed to load submissions");
@@ -62,9 +59,9 @@ const KYCSubmission = () => {
     };
 
     fetchSubmissions();
-  }, []);
+  }, [loggedUserId, loggedUserRole]);
 
-  // CSS class for status
+  // Status CSS
   const getStatusClass = (status: string) => {
     switch (status) {
       case "Pending":
@@ -82,19 +79,27 @@ const KYCSubmission = () => {
   };
 
   // Handle Approve / Reject
-  const handleStatusChange = (index: number, newStatus: "Approved" | "Rejected") => {
+  const handleStatusChange = (
+    index: number,
+    newStatus: "Approved" | "Rejected"
+  ) => {
     const updated = [...submissions];
     updated[index].status = newStatus;
     setSubmissions(updated);
-    setConfirmAction({ index: null, action: "" }); // reset confirm state
+    setConfirmAction({ index: null, action: "" });
   };
 
-  // Loading / Error / Empty
+  // UI States
   if (loading) return <div>Loading...</div>;
   if (error) return <div className="text-red-500">{error}</div>;
-  if (!submissions.length) return <div>No submissions found.</div>;
+  if (!submissions.length) {
+    return (
+      <div className="text-center text-red-500 text-lg py-10">
+        Submission not found.
+      </div>
+    );
+  }
 
-  //goToResult
   const goToResult = () => `${ADMIN_URL.SUBMISSION_RESULTS}`;
 
   return (
@@ -145,16 +150,21 @@ const KYCSubmission = () => {
                   {confirmAction.index === index ? (
                     <>
                       <button
-                        className="px-3 py-1 bg-green-500 text-white rounded cursor-pointer"
+                        className="px-3 py-1 bg-green-500 text-white rounded"
                         onClick={() =>
-                          handleStatusChange(index, confirmAction.action as "Approved" | "Rejected")
+                          handleStatusChange(
+                            index,
+                            confirmAction.action as "Approved" | "Rejected"
+                          )
                         }
                       >
                         Yes
                       </button>
                       <button
-                        className="px-3 py-1 bg-gray-300 rounded cursor-pointer"
-                        onClick={() => setConfirmAction({ index: null, action: "" })}
+                        className="px-3 py-1 bg-gray-300 rounded"
+                        onClick={() =>
+                          setConfirmAction({ index: null, action: "" })
+                        }
                       >
                         No
                       </button>
@@ -162,14 +172,18 @@ const KYCSubmission = () => {
                   ) : (
                     <>
                       <button
-                        className="px-3 py-1 border border-green-500 text-green-500 rounded hover:bg-green-50 cursor-pointer"
-                        onClick={() => setConfirmAction({ index, action: "Approved" })}
+                        className="px-3 py-1 border border-green-500 text-green-500 rounded hover:bg-green-50"
+                        onClick={() =>
+                          setConfirmAction({ index, action: "Approved" })
+                        }
                       >
                         Approve
                       </button>
                       <button
-                        className="px-3 py-1 border border-red-500 text-red-500 rounded hover:bg-red-50 cursor-pointer"
-                        onClick={() => setConfirmAction({ index, action: "Rejected" })}
+                        className="px-3 py-1 border border-red-500 text-red-500 rounded hover:bg-red-50"
+                        onClick={() =>
+                          setConfirmAction({ index, action: "Rejected" })
+                        }
                       >
                         Reject
                       </button>

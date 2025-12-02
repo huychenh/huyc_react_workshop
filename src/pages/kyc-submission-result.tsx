@@ -1,17 +1,65 @@
+import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
+import { API_URL_GET_KYC_SUBMISSIONS } from "../constant/url";
+import type { SubmissionInfo } from "../types/submission-info";
+import { getLoggedInUser } from "../constant/auth";
 
 const KYCSubmissionResult = () => {
+  const [loading, setLoading] = useState(true);
+  const [submissions, setSubmissions] = useState<SubmissionInfo[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  const loggedUser = getLoggedInUser();
+  const loggedUserId = loggedUser?.id ?? 0;
+
+  const normalizeSubmission = (item: any): SubmissionInfo => {
+    return {
+      id: item.id,
+      name: `${item.firstName ?? ""} ${item.lastName ?? ""}`.trim(),
+      status: item.kyc_status ?? "Pending",
+      date: item.createdAt ? item.createdAt.split("T")[0] : "2024-01-01",
+      userId: item.userId ?? item.id,
+    };
+  };
+
   const { state } = useLocation();
-  const submission = state?.submission;
+  const stateSubmission: SubmissionInfo | undefined = state?.submission;
 
-  if (!submission) {
-    return (
-      <div className="text-center text-red-500 text-lg py-10">
-        Submission not found.
-      </div>
-    );
-  }
+  useEffect(() => {
+    const fetchSubmissions = async () => {
+      if (stateSubmission) {
+        setSubmissions([stateSubmission]);
+        setLoading(false);
+        return;
+      }
 
+      try {
+        setLoading(true);
+
+        const res = await fetch(API_URL_GET_KYC_SUBMISSIONS);
+        if (!res.ok) throw new Error("Failed to load submissions");
+
+        const data = await res.json();
+
+        const normalized: SubmissionInfo[] = Array.isArray(data.users)
+          ? data.users
+              .map((item: any) => normalizeSubmission(item))
+              .filter((item: SubmissionInfo) => item.userId === loggedUserId)
+          : [];
+
+        setSubmissions(normalized);
+        setError(null);
+      } catch (err: any) {
+        setError(err.message || "Failed to load submissions");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSubmissions();
+  }, [stateSubmission, loggedUserId]);
+
+  // Status CSS
   const getStatusClass = (status: string) => {
     switch (status) {
       case "Pending":
@@ -28,6 +76,16 @@ const KYCSubmissionResult = () => {
     }
   };
 
+  // UI States
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div className="text-red-500">{error}</div>;
+  if (!submissions.length)
+    return (
+      <div className="text-center text-red-500 text-lg py-10">
+        Submission not found.
+      </div>
+    );
+
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
       <h2 className="text-xl font-semibold mb-4">KYC Submission Result</h2>
@@ -43,19 +101,21 @@ const KYCSubmissionResult = () => {
           </thead>
 
           <tbody>
-            <tr key={submission.id} className="hover:bg-gray-50">
-              <td className="px-4 py-2 border-b">{submission.name}</td>
-              <td className="px-4 py-2 border-b">
-                <span
-                  className={`px-2 py-1 rounded text-sm font-semibold ${getStatusClass(
-                    submission.status
-                  )}`}
-                >
-                  {submission.status}
-                </span>
-              </td>
-              <td className="px-4 py-2 border-b">{submission.date}</td>
-            </tr>
+            {submissions.map((submission) => (
+              <tr key={submission.id} className="hover:bg-gray-50">
+                <td className="px-4 py-2 border-b">{submission.name}</td>
+                <td className="px-4 py-2 border-b">
+                  <span
+                    className={`px-2 py-1 rounded text-sm font-semibold ${getStatusClass(
+                      submission.status
+                    )}`}
+                  >
+                    {submission.status}
+                  </span>
+                </td>
+                <td className="px-4 py-2 border-b">{submission.date}</td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
