@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import Input from "../components/input";
@@ -8,6 +9,7 @@ import { API_URL_ADD_USERS } from "../constant/url";
 
 const SignUp = () => {
   const navigate = useNavigate();
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const {
     register,
@@ -17,7 +19,7 @@ const SignUp = () => {
   } = useForm<SignUpForm>();
 
   const onSubmit = async (data: SignUpForm) => {
-    console.log("Sign up data: ", data);
+    setMessage(null); // reset message
 
     try {
       const response = await fetch(API_URL_ADD_USERS, {
@@ -35,23 +37,35 @@ const SignUp = () => {
       console.log("Signup API result:", result);
 
       if (!response.ok) {
-        alert("Signup failed: " + (result.message || "Unknown error"));
+        setMessage({ type: "error", text: result.message || "Signup failed" });
         return;
       }
 
-      alert("Signup success! (Note: DummyJSON does NOT save user permanently)");
-      navigate("/auth/login");
+      setMessage({
+        type: "success",
+        text: "Signup success! (Note: DummyJSON does NOT save user permanently)",
+      });
+      setTimeout(() => navigate("/auth/login"), 30000);
     } catch (error) {
       console.error(error);
-      alert("Network error during signup");
+      setMessage({ type: "error", text: "Network error during signup" });
     }
   };
 
   return (
     <div className="max-w-lg mx-auto mt-10 p-8 shadow-md rounded-xl bg-white">
-      <h1 className="text-3xl font-semibold text-center mb-6">
-        Create a Free Account
-      </h1>
+      <h1 className="text-3xl font-semibold text-center mb-6">Create a Free Account</h1>
+
+      {/* Message */}
+      {message && (
+        <div
+          className={`mb-4 p-3 rounded ${
+            message.type === "success" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+          }`}
+        >
+          {message.text}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         {/* Username */}
@@ -93,8 +107,7 @@ const SignUp = () => {
             error={errors.confirmPassword?.message}
             {...register("confirmPassword", {
               required: "Please confirm your password",
-              validate: (value) =>
-                value === watch("password") || "Passwords do not match",
+              validate: (value) => value === watch("password") || "Passwords do not match",
             })}
           />
         </div>
@@ -109,9 +122,7 @@ const SignUp = () => {
             </a>
           </p>
         </div>
-        {errors.accept && (
-          <p className="text-red-600 text-sm">You must accept the terms</p>
-        )}
+        {errors.accept && <p className="text-red-600 text-sm">You must accept the terms</p>}
 
         {/* Submit button */}
         <Button>Create account</Button>
