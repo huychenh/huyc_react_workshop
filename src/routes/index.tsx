@@ -11,6 +11,11 @@ import AuthLayout from "../layouts/auth";
 import AdminLayout from "../layouts/admin";
 import SignUp from "../pages/signup";
 import KYCSubmission from "../pages/kyc-submission";
+import UserProfile from "../pages/user-profile";
+import UserList from "../pages/user-list";
+import KYCInformation from "../pages/kyc-information";
+import KYCSubmissionResult from "../pages/kyc-submission-result";
+
 
 const requireAuth = () => {
   const token = localStorage.getItem(TOKEN);
@@ -46,15 +51,30 @@ const Router = createBrowserRouter([
     loader: requireAuth,
     children: [
       { index: true, Component: Dashboard },
-
       {
         path: ADMIN_URL.DASHBOARD,
         Component: Dashboard,
       },
       {
+        path: `${ADMIN_URL.PROFILE}/:id`,
+        Component: UserProfile,
+      },
+      {
         path: ADMIN_URL.SUBMISSIONS,
         Component: KYCSubmission,
       },
+      {
+        path: ADMIN_URL.SUBMISSION_RESULTS,
+        Component: KYCSubmissionResult,
+      },
+      {
+        path: ADMIN_URL.USERS,
+        Component: UserList,
+      },
+      {
+        path: `${ADMIN_URL.KYC}/:id`,
+        Component: KYCInformation,
+      }
     ],
   },
 ]);

@@ -1,22 +1,30 @@
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import type { LoginForm } from "../types/login-form";
 import { TOKEN } from "../constant/auth";
-import { ADMIN_URL } from "../constant/url";
+import { ADMIN_URL, AUTH_URL } from "../constant/url";
 import Input from "../components/input";
 import CheckBox from "../components/checkbox";
 import Button from "../components/button";
 import { useForm } from "react-hook-form";
 import { useLoginMutation } from "../hooks/use-login-mutation";
+import { OFFICER_ROLES } from "../constant/user-role";
 
 const Login = () => {
   const navigate = useNavigate();
+
+  const rememberedUsername = localStorage.getItem("rememberedUsername") || "";
 
   const {
     handleSubmit,
     register,
     formState: { errors },
     watch,
-  } = useForm<LoginForm>();
+  } = useForm<LoginForm>({
+    defaultValues: {
+      username: rememberedUsername,
+      remember: !!rememberedUsername,
+    },
+  });
 
   const { mutateAsync: login, isPending, error, reset } = useLoginMutation();
 
@@ -27,9 +35,35 @@ const Login = () => {
         password: data.password,
       });
 
-      const { accessToken } = response.data;
+      // Handle roles
+      const role: "officer" | "user" = OFFICER_ROLES.includes(data.username)
+        ? "officer"
+        : "user";
+
+      const { accessToken, id } = response.data;
+
+      // Save token + user info
       localStorage.setItem(TOKEN, accessToken);
-      return navigate(ADMIN_URL.DASHBOARD);
+      localStorage.setItem(
+        "user",
+        JSON.stringify({ id, username: data.username, role })
+      );
+
+      // Handle remember checkbox
+      if (data.remember) {
+        localStorage.setItem("rememberedUsername", data.username);
+      } else {
+        localStorage.removeItem("rememberedUsername");
+      }
+
+      const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+
+      if (storedUser.role === "officer") {
+        return navigate(ADMIN_URL.USERS);
+      }
+
+      // Navigate user profile WITH ID
+      return navigate(`${ADMIN_URL.PROFILE}/${storedUser.id}`);
     } catch (err) {
       console.error("Login failed:", err);
     }
@@ -76,16 +110,12 @@ const Login = () => {
       </form>
       <p className="mt-4 text-sm text-center text-gray-600">
         Don't have an account?
-        <a
-          href="#"
-          onClick={(e) => {
-            e.preventDefault();
-            navigate("/auth/signup");
-          }}
+        <Link
+          to={AUTH_URL.SIGNUP}
           className="ml-2 text-blue-600 hover:underline"
         >
           Sign up
-        </a>
+        </Link>
       </p>
     </>
   );
