@@ -99,7 +99,7 @@ const UserList = () => {
               currentPageUsers.map((user: UserInfo, i) => (
                 <tr key={user.id} className="hover:bg-gray-50">
 
-                  {/* STT COLUMN */}
+                  {/* # column */}
                   <td className="px-4 py-2 border-b">
                     {startIndex + i + 1}
                   </td>
