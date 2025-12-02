@@ -150,25 +150,26 @@ export const basicFields: Array<
 
 
 // Addresses
-export const addressFields: Array<[string, keyof Address]> = [
-    ["Country", "country"],
-    ["City", "city"],
-    ["Street", "street"],
-    ["Postal Code", "postalCode"],
+export const addressFields: Array<[string, keyof Address, boolean]> = [
+    ["Country", "country", true],   // required
+    ["City", "city", true],         // required
+    ["Street", "street", true],     // required
+    ["Postal Code", "postalCode", false],
 ];
 
+
 // Emails
-export const emailFields: Array<[string, keyof Email]> = [
-    ["Email Address", "email"],
-    ["Type", "type"],
-    ["Preferred", "preferred"],
+export const emailFields: Array<[string, keyof Email, boolean]> = [
+    ["Email Address", "email", true],
+    ["Type", "type", true],
+    ["Preferred", "preferred", true],
 ];
 
 // Phones
-export const phoneFields: Array<[string, keyof Phone]> = [
-    ["Phone Number", "number"],
-    ["Type", "type"],
-    ["Preferred", "preferred"],
+export const phoneFields: Array<[string, keyof Phone, boolean]> = [
+    ["Phone Number", "number", true],
+    ["Type", "type", true],
+    ["Preferred", "preferred", true],
 ];
 
 export const LIABILITY_TYPES: Liability["type"][] = [

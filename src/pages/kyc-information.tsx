@@ -31,6 +31,10 @@ const KYCInformation = () => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [errors, setErrors] = useState<Record<string, boolean>>({});
+  const [addressErrors, setAddressErrors] = useState<Record<number, Record<string, boolean>>>({});
+  const [emailErrors, setEmailErrors] = useState<Record<number, Record<string, boolean>>>({});
+
+
 
   // Fetch KYC info
   useEffect(() => {
@@ -76,6 +80,9 @@ const KYCInformation = () => {
     if (!kycInfo) return false;
 
     const newErrors: Record<string, boolean> = {};
+    const newAddressErrors: Record<number, Record<string, boolean>> = {};
+
+    // Validate basic fields
     const requiredFields: Array<keyof KYCInfo> = ["firstName", "lastName", "birthday"];
     requiredFields.forEach((key) => {
       if (!kycInfo[key] || kycInfo[key].toString().trim() === "") {
@@ -83,14 +90,48 @@ const KYCInformation = () => {
       }
     });
 
-    if (Object.keys(newErrors).length > 0) {
+    // Validate addresses
+    (kycInfo.addresses || []).forEach((addr, index) => {
+      const addrErr: Record<string, boolean> = {};
+      if (!addr.country?.trim()) addrErr.country = true;
+      if (!addr.city?.trim()) addrErr.city = true;
+      if (!addr.street?.trim()) addrErr.street = true;
+
+      if (Object.keys(addrErr).length > 0) {
+        newAddressErrors[index] = addrErr;
+      }
+    });
+
+    if (Object.keys(newErrors).length > 0 || Object.keys(newAddressErrors).length > 0) {
       setErrors(newErrors);
+      setAddressErrors(newAddressErrors); // mới
       setError("Please fill all required fields.");
       return false; // validation fail
     }
 
+    //Emails
+    const newEmailErrors: Record<number, Record<string, boolean>> = {};
+    (kycInfo.emails || []).forEach((email, index) => {
+      const errors: Record<string, boolean> = {};
+      if (!email.email?.trim()) errors.email = true; // required
+      if (Object.keys(errors).length > 0) newEmailErrors[index] = errors;
+    });
+
+    if (
+      Object.keys(newErrors).length > 0 ||
+      Object.keys(newEmailErrors).length > 0
+    ) {
+      setErrors(newErrors);
+      setEmailErrors(newEmailErrors);
+      setError("Please fill all required fields.");
+      return false;
+    }
+
+
+
     try {
       setErrors({});
+      setAddressErrors({});
       setSaving(true);
       setError(null);
       setSuccessMessage(null);
@@ -122,6 +163,7 @@ const KYCInformation = () => {
 
 
 
+
   const handleCancel = () => {
     if (!originalKycInfo) return;
     setKycInfo(originalKycInfo);
@@ -134,13 +176,6 @@ const KYCInformation = () => {
         Loading user information...
       </div>
     );
-
-  // if (error || !kycInfo)
-  //   return (
-  //     <div className="p-6 text-center text-red-500 text-lg font-medium">
-  //       {error || "User not found"}
-  //     </div>
-  //   );
 
   //Function Add Address
   const MAX_ADDRESSES = 3;
@@ -168,6 +203,8 @@ const KYCInformation = () => {
       };
     });
   };
+
+
   //
 
   //Function Remove Address
@@ -679,8 +716,6 @@ const KYCInformation = () => {
                       : "border-gray-300 bg-gray-100"
                     }`}
                 />
-
-
               </div>
             ))}
 
@@ -717,19 +752,19 @@ const KYCInformation = () => {
                 </legend>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
-                  {addressFields.map(([label, key]) => (
+                  {addressFields.map(([label, key, required]) => (
                     <div key={label}>
-                      <label className="block text-gray-600">{label}</label>
+                      {label} {required && <span className="text-red-500">*</span>}
                       <input
                         type="text"
                         value={addr[key] || ""}
                         readOnly={!isEditing || isForbidden}
-                        onChange={(e) =>
-                          handleAddressChange(index, key, e.target.value)
-                        }
-                        className={`mt-1 w-full border px-2 py-1 rounded ${isEditing && !isForbidden
-                          ? "border-blue-500"
-                          : "border-gray-300 bg-gray-100"
+                        onChange={(e) => handleAddressChange(index, key, e.target.value)}
+                        className={`mt-1 w-full border px-2 py-1 rounded ${addressErrors[index]?.[key]
+                          ? "border-red-500 bg-red-100"
+                          : isEditing && !isForbidden
+                            ? "border-blue-500"
+                            : "border-gray-300 bg-gray-100"
                           }`}
                       />
                     </div>
@@ -800,23 +835,24 @@ const KYCInformation = () => {
                 </legend>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
-                  {emailFields.map(([label, key]) => (
+                  {emailFields.map(([label, key, required]) => (
                     <div key={label}>
-                      <label className="block text-gray-600">{label}</label>
+                      {label} {required && <span className="text-red-500">*</span>}
 
                       {key === "email" && (
                         <input
                           type="email"
                           value={email.email || ""}
                           readOnly={!isEditing || isForbidden}
-                          onChange={(e) =>
-                            handleEmailChange(index, "email", e.target.value)
-                          }
-                          className={`mt-1 w-full border px-2 py-1 rounded ${isEditing && !isForbidden
-                            ? "border-blue-500"
-                            : "border-gray-300 bg-gray-100"
+                          onChange={(e) => handleEmailChange(index, "email", e.target.value)}
+                          className={`mt-1 w-full border px-2 py-1 rounded ${emailErrors[index]?.email
+                              ? "border-red-500 bg-red-100"
+                              : isEditing && !isForbidden
+                                ? "border-blue-500"
+                                : "border-gray-300 bg-gray-100"
                             }`}
                         />
+
                       )}
 
                       {key === "type" && (
@@ -882,6 +918,7 @@ const KYCInformation = () => {
               </button>
             </div>
           </div>
+
 
           {/* Phones Area */}
           <div className="border border-gray-400 rounded-md p-4 mb-6">
@@ -1727,8 +1764,8 @@ const KYCInformation = () => {
         <div className="mt-6 flex flex-wrap gap-2">
           <button
             className={`px-4 py-2 rounded text-white ${isForbidden
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-blue-600 hover:bg-blue-700"
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700"
               } ${saving ? "opacity-50 cursor-not-allowed" : ""}`}
             disabled={saving || isForbidden}
             onClick={async () => {
