@@ -78,7 +78,7 @@ const Login = () => {
       <form className="mt-6" onSubmit={handleSubmit(onSubmit)} noValidate>
         <div className="mb-4">
           <Input
-            label="Username: emilys"
+            label="Username:"
             required
             placeholder="Enter your username"
             error={errors.username?.message}
@@ -89,7 +89,7 @@ const Login = () => {
         </div>
         <div className="mb-4">
           <Input
-            label="Password: emilyspass"
+            label="Password:"
             type="password"
             placeholder="Enter your password"
             error={errors.password?.message}
